@@ -65,6 +65,31 @@ def ijk(l):
     assert i < 2**16 and j < 2**16 and k < 2**16
     return i,j,k
 
+def dac_search(target,r0,r1,r2,chain,chainlen,best,bestlen):
+  if chainlen >= bestlen: return best,bestlen
+  if r2 > target: return best,bestlen
+  if r2<<(bestlen-1-chainlen) < target: return best,bestlen
+  if r2 == target: return chain,chainlen
+  chain *= 2
+  chainlen += 1
+  best,bestlen = dac_search(target,r0,r2,r0+r2,chain+1,chainlen,best,bestlen)
+  best,bestlen = dac_search(target,r1,r2,r1+r2,chain,chainlen,best,bestlen)
+  return best,bestlen
+
+def dac(target):
+  best = None
+  bestlen = 0
+  while best == None:
+    bestlen += 1
+    best,bestlen = dac_search(target,1,2,3,0,0,best,bestlen)
+  return best,bestlen
+
+def print_dac(dac, name, len, file):
+    print(f'static char {name}[{max(len,1)}] = '+'\"', end='', file=file)
+    for bit in dac: print(f'{bit}', end='', file=file)
+    if len==0: print('0', end='', file=file)
+    print('\";', file=file)
+
 bL = '{'+', '.join([str(ceil(log(l,2))) for l in L])+'}'
 strategy4 = strategy(f//2-1, 2*p2, q4)
 strategy4 = '{'+', '.join([str(s) for s in strategy4])+'}'
@@ -93,6 +118,8 @@ FpEls = {
     'p_cofactor_for_3g': (p+1)//(3**g),
     'p_cofactor_for_6fg': (p+1)//(2**f*3**g)
 }
+
+DACS = [dac(l) for l in L]
 
 from cformat import FpEl, Object, ObjectFormatter
 objs = ObjectFormatter(
@@ -159,6 +186,22 @@ with open('include/ec_params.h', 'w') as hfile:
         print(f'#define P_COFACTOR_FOR_2F_BITLENGTH {ceil(log((p+1)//(2**f),2))}', file=hfile)
         print(f'#define P_COFACTOR_FOR_3G_BITLENGTH {ceil(log((p+1)//(3**g),2))}', file=hfile)
         print(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {ceil(log((p+1)//(2**f*3**g),2))}', file=hfile)
+
+        print('',file=hfile)
+        print('// differential addition chains', file= hfile)
+        print(f'extern const digit_t DACS[{len(DACS)}];', file=hfile)
+        print(f'extern const int DAC_LEN[{len(DACS)}];', file=hfile)
+
+        print('',file=cfile)
+        print('// differential addition chains', file= cfile)
+        print(f'const digit_t DACS[{len(DACS)}] = '+'{', end= '', file=cfile)
+        for dac in DACS:
+            print(f'{dac[0]}, ', end= '', file=cfile)
+        print('};', file=cfile)
+        print(f'const int DAC_LEN[{len(DACS)}] = '+'{', end= '', file=cfile)
+        for dac in DACS:
+            print(f'{dac[1]}, ', end= '', file=cfile)
+        print('};', file=cfile)
 
         print('',file=hfile)
         print('#endif', file=hfile)

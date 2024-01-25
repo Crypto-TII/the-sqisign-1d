@@ -133,12 +133,12 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
         copy_point(&P, &ker_plus);
         for(j = i+1; j < P_LEN; j++){
             for(k = 0; k < phi->degree[j]; k++)
-                xMULv2(&P, &P, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A24);
+                xMULdac(&P, &P, DACS[j], DAC_LEN[j], &A24);
         }
         for(k = 0; k < phi->degree[i]; k++){
             copy_point(&K, &P);
             for(j = 0; j < phi->degree[i]-k-1; j++)
-                xMULv2(&K, &K, &(TORSION_ODD_PRIMES[i]), p_plus_minus_bitlength[i], &A24);
+                xMULdac(&K, &K, DACS[i], DAC_LEN[i], &A24);
             kps(i, K, A24);
             xisog(&B24, i, A24);
             xeval(&P, i, P, A24);
@@ -156,12 +156,12 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
         copy_point(&P, &ker_minus);
         for(j = i+1; j < P_LEN+M_LEN; j++){
             for(k = 0; k < phi->degree[j]; k++)
-                xMULv2(&P, &P, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A24);
+                xMULdac(&P, &P, DACS[j], DAC_LEN[j], &A24);
         }
         for(k = 0; k < phi->degree[i]; k++){
             copy_point(&K, &P);
             for(j = 0; j < phi->degree[i]-k-1; j++)
-                xMULv2(&K, &K, &(TORSION_ODD_PRIMES[i]), p_plus_minus_bitlength[i], &A24);
+                xMULdac(&K, &K, DACS[i], DAC_LEN[i], &A24);
             kps(i, K, A24);
             xisog(&B24, i, A24);
             xeval(&P, i, P, A24);

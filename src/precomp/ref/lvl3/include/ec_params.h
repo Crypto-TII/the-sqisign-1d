@@ -39,4 +39,8 @@ extern const digit_t p_cofactor_for_6fg[NWORDS_ORDER];
 #define P_COFACTOR_FOR_3G_BITLENGTH 271
 #define P_COFACTOR_FOR_6FG_BITLENGTH 174
 
+// differential addition chains
+extern const digit_t DACS[28];
+extern const int DAC_LEN[28];
+
 #endif

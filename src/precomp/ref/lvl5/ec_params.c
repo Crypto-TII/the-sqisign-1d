@@ -36,3 +36,8 @@ const digit_t p_cofactor_for_2f[NWORDS_ORDER] = {0xba674ca63456d371, 0xf532fd785
 const digit_t p_cofactor_for_3g[NWORDS_ORDER] = {0x0, 0x0, 0xf469d6875a20000, 0x10cafa623ad43e00, 0x27f3e11532c58f78, 0x9ba98880da1dc006, 0x8, 0x0};
 const digit_t p_cofactor_for_6fg[NWORDS_ORDER] = {0x1f0007a34eb43ad1, 0xc7bc08657d311d6a, 0xe00313f9f08a9962, 0x44dd4c4406d0e, 0x0, 0x0, 0x0, 0x0};
 #endif
+
+
+// differential addition chains
+const digit_t DACS[34] = {0, 0, 42, 72, 48, 3472, 6800, 0, 2, 10, 48, 106, 20, 417, 180, 2692, 1536, 6484, 4618, 10336, 40977, 100898, 68224, 10336, 271530, 279681, 336544, 344148, 853014, 672065, 1049610, 2884160, 2232464, 11536384, };
+const int DAC_LEN[34] = {0, 3, 6, 7, 8, 12, 13, 1, 2, 4, 6, 7, 7, 9, 9, 12, 12, 13, 13, 15, 16, 17, 17, 18, 19, 19, 19, 19, 20, 20, 21, 22, 22, 25, };

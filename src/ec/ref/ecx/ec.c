@@ -38,6 +38,37 @@ void xDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* AC)
     fp2_mul(&Q->z, &t0, &t2);
 }
 
+void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
+{
+    /* ----------------------------------------------------------------------------- *
+     * Differential point tripling given the montgomery coefficient A3 = (A+2C:A-2C)
+     * ----------------------------------------------------------------------------- */
+     
+    fp2_t t0, t1, t2, t3, t4;
+    fp2_sub(&t0, &P->x, &P->z);
+    fp2_sqr(&t2, &t0);
+    fp2_add(&t1, &P->x, &P->z);
+    fp2_sqr(&t3, &t1);
+    fp2_add(&t4, &t1, &t0);
+    fp2_sub(&t0, &t1, &t0);
+    fp2_sqr(&t1, &t4);
+    fp2_sub(&t1, &t1, &t3);
+    fp2_sub(&t1, &t1, &t2);
+    fp2_mul(&Q->x, &t3, &A3->x);
+    fp2_mul(&t3, &Q->x, &t3);
+    fp2_mul(&Q->z, &t2, &A3->z);
+    fp2_mul(&t2, &t2, &Q->z);
+    fp2_sub(&t3, &t2, &t3);
+    fp2_sub(&t2, &Q->x, &Q->z);
+    fp2_mul(&t1, &t2, &t1);
+    fp2_add(&t2, &t3, &t1);
+    fp2_sqr(&t2, &t2);
+    fp2_mul(&Q->x, &t2, &t4);
+    fp2_sub(&t1, &t3, &t1);
+    fp2_sqr(&t1, &t1);
+    fp2_mul(&Q->z, &t1, &t0);
+}
+
 void xDBLv2(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     // This version receives the coefficient value A24 = (A+2C:4C) 
@@ -217,6 +248,31 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
 
     fp2_copy(&Q->x, &R0.x);
     fp2_copy(&Q->z, &R0.z);
+}
+
+void xMULdac(ec_point_t* Q, ec_point_t const* P, digit_t dac, int dac_len, ec_point_t const* A24){
+    // This version receives a differential addition chain rather than the raw scalar
+	ec_point_t R0, R1, R2, T;
+	copy_point(&R0, P);
+	xDBLv2(&R1, P, A24);
+	xADD(&R2, &R1, &R0, P);
+
+	int j;
+	for (int j = 0; j < dac_len; j++)
+	{
+		swap_points(&R0, &R1, -((dac >> j) & 1));
+		// Complete addition formulas are required to get rid of this branch
+		if (ec_is_zero(&R0))
+			xDBLv2(&T, &R2, A24);
+		else
+			xADD(&T, &R2, &R1, &R0);
+
+		copy_point(&R0, &R1);
+		copy_point(&R1, &R2);
+		copy_point(&R2, &T);
+	};
+
+	copy_point(Q, &R2);
 }
 
 static void mp_add(digit_t* c, const digit_t* a, const digit_t* b, const unsigned int nwords)

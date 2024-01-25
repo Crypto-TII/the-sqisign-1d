@@ -234,9 +234,32 @@ void ec_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalar, con
  * @param curve the curve
  * @param scalar an unsigned multi-precision integer
  * @param kbits the bit size of scalar
+ * @param A24 the Montgomery coefficient in projective form (A+2)/4
  * @param P a point
  */
 void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbits, ec_point_t const* A24);
+
+/**
+ * @brief Point multiplication based on a precomputed differential addition chain
+ *
+ * @param res computed scalar * P
+ * @param curve the curve
+ * @param dac the binary differential addition chain presented as a digit
+ * @param dac_len the bit length of the dac
+ * @param A24 the Montgomery coefficient in projective form (A+2)/4
+ * @param P a point
+ */
+void xMULdac(ec_point_t* Q, ec_point_t const* P, digit_t dac, int dac_len, ec_point_t const* A24);
+
+
+/**
+ * @brief Point tripling for x-only Montgomery coordinates
+ *
+ * @param res computed scalar * Q
+ * @param A3 the Montgomery coefficient in projective form (A+2)/(A-2)
+ * @param P a point
+ */
+void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3);
 
 /**
  * @brief Combination P+m*Q

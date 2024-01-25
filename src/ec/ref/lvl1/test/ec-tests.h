@@ -520,6 +520,93 @@ bool ec_run()
     printf("  Montgomery x-only double-scalar multiplication runs in .......... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
+    // Odd cofactor ladder
+    ec_point_t A3, A24;
+    cycles = 0;
+    for (n = 0; n < BENCH_LOOPS; n++)
+    {
+        fp2random_test(&A3.x);
+        fp2random_test(&A3.z);
+        fp2random_test(&A24.x);
+        fp2random_test(&A24.z);
+        fp2random_test(&P.x);
+        fp2random_test(&P.z);
+        cycles1 = cpucycles();
+        xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &A24);
+        cycles2 = cpucycles();
+        cycles = cycles + (cycles2 - cycles1);
+    }
+    printf("  Clearing odd cofactor via Montgomery ladder .................... %7lld cycles", cycles/BENCH_LOOPS);
+    printf("\n");
+
+    // Odd cofactor DACs
+    cycles = 0;
+    for (n = 0; n < BENCH_LOOPS; n++)
+    {
+        fp2random_test(&A3.x);
+        fp2random_test(&A3.z);
+        fp2random_test(&A24.x);
+        fp2random_test(&A24.z);
+        fp2random_test(&P.x);
+        fp2random_test(&P.z);
+        cycles1 = cpucycles();
+        for(int i = 0; i < POWER_OF_3; i++){
+            xTPL(&P, &P, &A3);
+        }
+        for(int i = 1; i < P_LEN; i++){
+            for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+                xMULdac(&P, &P, DACS[i], DAC_LEN[i], &A24);
+            }
+        }
+        cycles2 = cpucycles();
+        cycles = cycles + (cycles2 - cycles1);
+    }
+    printf("  Clearing odd cofactor via DACs ................................ %7lld cycles", cycles/BENCH_LOOPS);
+    printf("\n");
+
+    // Non-3 cofactor ladder
+    cycles = 0;
+    for (n = 0; n < BENCH_LOOPS; n++)
+    {
+        fp2random_test(&A3.x);
+        fp2random_test(&A3.z);
+        fp2random_test(&A24.x);
+        fp2random_test(&A24.z);
+        fp2random_test(&P.x);
+        fp2random_test(&P.z);
+        cycles1 = cpucycles();
+        xMULv2(&P, &P, p_cofactor_for_3g, P_COFACTOR_FOR_3G_BITLENGTH, &A24);
+        cycles2 = cpucycles();
+        cycles = cycles + (cycles2 - cycles1);
+    }
+    printf("  Clearing non-3 cofactor via Montgomery ladder .................. %7lld cycles", cycles/BENCH_LOOPS);
+    printf("\n");
+
+    // Non-3 cofactor DACs
+    cycles = 0;
+    for (n = 0; n < BENCH_LOOPS; n++)
+    {
+        fp2random_test(&A3.x);
+        fp2random_test(&A3.z);
+        fp2random_test(&A24.x);
+        fp2random_test(&A24.z);
+        fp2random_test(&P.x);
+        fp2random_test(&P.z);
+        cycles1 = cpucycles();
+        for(int i = 0; i < POWER_OF_2; i++){
+            xDBL(&P, &P, &A24);
+        }
+        for(int i = 1; i < P_LEN; i++){
+            for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+                xMULdac(&P, &P, DACS[i], DAC_LEN[i], &A24);
+            }
+        }
+        cycles2 = cpucycles();
+        cycles = cycles + (cycles2 - cycles1);
+    }
+    printf("  Clearing non-3 cofactor via DACs .............................. %7lld cycles", cycles/BENCH_LOOPS);
+    printf("\n");
+
     return OK;
 }
 
