@@ -40,11 +40,11 @@
 
 typedef struct signature {
     id2iso_compressed_long_two_isog_t zip;  /// the compressed isogeny 
-    digit_t r[NWORDS_FIELD];          /// first scalar encoding the challenge
+    digit_t r[NWORDS_ORDER];          /// first scalar encoding the challenge
     struct {
         unsigned char select23; // this&1 is bit2, this&2 is bit3
-        digit_t scalar2[NWORDS_FIELD];
-        digit_t scalar3[NWORDS_FIELD];
+        digit_t scalar2[NWORDS_ORDER];
+        digit_t scalar3[NWORDS_ORDER];
     } s;                                    /// second scalar encoding the challenge
 } signature_t;
 

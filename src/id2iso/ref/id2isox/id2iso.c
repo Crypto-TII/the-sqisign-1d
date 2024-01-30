@@ -825,7 +825,7 @@ void id2iso_ideal_to_isogeny_even(ec_isog_even_t *isog, const quat_left_ideal_t 
     ibz_finalize(&norm);
     assert(isog->length <= TORSION_PLUS_EVEN_POWER);
 
-    digit_t scalars[2][NWORDS_FIELD];
+    digit_t scalars[2][NWORDS_ORDER];
     {
         ibz_vec_2_t vec;
         ibz_vec_2_init(&vec);
@@ -984,7 +984,7 @@ void id2iso_ideal_to_kernel_dlogs_odd(ibz_vec_2_t *vec, ec_degree_odd_t *deg, co
 
 void id2iso_ideal_to_isogeny_odd(ec_isog_odd_t *isog, const ec_curve_t *domain, const ec_basis_t *basis_plus,const ec_basis_t *basis_minus, const quat_left_ideal_t *lideal_input)
 {
-    digit_t scalars_plus[2][NWORDS_FIELD], scalars_minus[2][NWORDS_FIELD];
+    digit_t scalars_plus[2][NWORDS_ORDER], scalars_minus[2][NWORDS_ORDER];
     {
         ibz_vec_2_t vec;
         ibz_vec_2_init(&vec);

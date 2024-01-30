@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <fp.h>
 #include <fp2.h>
-#include <curve_extras.h>
 
 #define PASSED    0
 #define FAILED    1

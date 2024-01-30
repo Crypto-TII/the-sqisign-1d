@@ -1,24 +1,7 @@
 #include <poly.h>
 #include <assert.h>
 #include <stdio.h>
-
-bool fp2_isequal(fp2_t a, fp2_t b){
-    return fp_is_equal(a.re, b.re) && fp_is_equal(a.im, b.im);
-}
-
-// VERY NOT SECURE (testing only)
-void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
-    // Update seed
-    srand((unsigned) a->re[0]);
-}
+#include "test_extras.h"
 
 void slow_mul(poly h, poly f, int lenf, poly g, int leng){
   // Computes h = f*g by school method
@@ -82,7 +65,7 @@ int main(){
     printf("\r\x1b[K");
     
     for(e = 0; e < nf; e++){
-      fp2_random(&f[e]);
+      fp2random_test(&f[e]);
     }
     poly_mul(h, f, nf, f, 0);
     for(e = 0; e < nf-1; e++){
@@ -109,12 +92,12 @@ int main(){
       
       fp2_t f[nf];   //Random length nf poly
       for(e = 0; e < nf; e++){
-	fp2_random(&f[e]);
+	fp2random_test(&f[e]);
       }
       
       fp2_t g[ng];  // Random length ng poly
       for(e = 0; e < ng; e++){
-	fp2_random(&g[e]);
+	fp2random_test(&g[e]);
       }
       
       fp2_t h[nf+ng-1];// Compute product
@@ -124,7 +107,7 @@ int main(){
       slow_mul(fg, f, nf, g, ng);
       
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&(h[e]), &(fg[e]))==1);
       }
     }
   }
@@ -146,12 +129,12 @@ int main(){
       
       //Random length nf poly
       for(e = 0; e < nf; e++){
-	fp2_random(&h[e]);
+	fp2random_test(&h[e]);
       }
       
       // Random length ng poly
       for(e = 0; e < ng; e++){
-	fp2_random(&h[e+nf]);
+	fp2random_test(&h[e+nf]);
       }
 
       // Compute the product
@@ -161,7 +144,7 @@ int main(){
 
 
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&(h[e]), &(fg[e]))==1);
       }
     }
   }
@@ -179,7 +162,7 @@ int main(){
     printf("\r\x1b[K");
     
     for(e = 0; e < nf; e++){
-      fp2_random(&f[e]);
+      fp2random_test(&f[e]);
     }
     
     for(n = 1; n < nmax; n++){
@@ -213,10 +196,10 @@ int main(){
 
 	//Get random polynomials
 	for(e = 0; e < nf; e++){
-	  fp2_random(&f[e]);
+	  fp2random_test(&f[e]);
 	}
 	for(e = 0; e < ng; e++){
-	  fp2_random(&g[e]);
+	  fp2random_test(&g[e]);
 	}
 	
 	//Save regular result to fg
@@ -230,7 +213,7 @@ int main(){
 	  //Compare with expected
 	  e = 0;
 	  while(e < nf+ng-1 && e < n){
-	    assert(fp2_isequal(h[e], fg[e]) == 1);
+	    assert(fp2_is_equal(&(h[e]), &(fg[e])) == 1);
 	    e++;
 	  }
 	  while(e < n){
@@ -258,10 +241,10 @@ int main(){
 	// This runs from floor((nf+1)/2) to ceil((nf+1)/2)
 	fp2_t g[ng];
 	for(e = 0; e < nf; e++){
-	  fp2_random(&f[e]);
+	  fp2random_test(&f[e]);
 	}
 	for(e = 0; e < ng; e++){
-	  fp2_random(&g[e]);
+	  fp2random_test(&g[e]);
 	}
 	
 	fp2_t h[nf+ng-1];
@@ -269,7 +252,7 @@ int main(){
 	poly_mul_middle(g, g, ng, f, nf);
       
 	for(e = 0; e < ng; e++){
-	  assert(fp2_isequal(h[e+nf-ng], g[e])==1);
+	  assert(fp2_is_equal(&(h[e+nf-ng]), &(g[e]))==1);
 	}
       }
     }
@@ -289,19 +272,19 @@ int main(){
 
 	// Get random palyndromes
 	for(e = 0; e < (nf>>1); e++){
-	  fp2_random(&f[e]);
+	  fp2random_test(&f[e]);
 	  fp2_copy(&f[nf-1-e], &f[e]);
 	}
 	if(nf & 1){
-	  fp2_random(&f[nf>>1]);
+	  fp2random_test(&f[nf>>1]);
 	}
 
 	for(e = 0; e < (ng>>1); e++){
-	  fp2_random(&g[e]);
+	  fp2random_test(&g[e]);
 	  fp2_copy(&g[ng-1-e], &g[e]);
 	}
 	if(ng & 1){
-	  fp2_random(&g[ng>>1]);
+	  fp2random_test(&g[ng>>1]);
 	} 
 
 	// Compute products
@@ -310,7 +293,7 @@ int main(){
 
 	// Compare
 	for(e = 0; e < nf+ng-1; e++){
-	  assert(fp2_isequal(fg[e], h[e])==1);
+	  assert(fp2_is_equal(&(fg[e]), &(h[e]))==1);
 	}
       }
     }		 
@@ -343,7 +326,7 @@ int main(){
 	for(i = 0; i < tree_size; i++){
 	  F[i] = malloc(sizeof(fp2_t)*LENF);
 	  for(e = 0; e < LENF; e++){
-	    fp2_random(&F[i][e]);
+	    fp2random_test(&F[i][e]);
 	  }
 	}
 	product_tree(H, DEG, 0, F, LENF, tree_size);
@@ -363,7 +346,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&(H[0][e]), &(h[e]))==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){
@@ -402,11 +385,11 @@ int main(){
 	for(i = 0; i < tree_size; i++){
 	  F[i] = malloc(sizeof(fp2_t)*LENF);
 	  for(e = 0; e < (LENF>>1); e++){
-	    fp2_random(&F[i][e]);
+	    fp2random_test(&F[i][e]);
 	    fp2_copy(&F[i][LENF-1-e], &F[i][e]);
 	  }
 	  if(LENF & 1){
-	  	fp2_random(&F[i][(LENF>>1)]);
+	  	fp2random_test(&F[i][(LENF>>1)]);
 	  }
 	}
 	product_tree_selfreciprocal(H, DEG, 0, F, LENF, tree_size);
@@ -424,7 +407,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&(H[0][e]), &(h[e]))==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){

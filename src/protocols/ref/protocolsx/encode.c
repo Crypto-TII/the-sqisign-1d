@@ -118,14 +118,22 @@ static void fp2_encode(const fp2_t* x, unsigned char *enc)
 {
     fp2_t y;
     fp2_frommont(&y, x);
-    encode_digits(enc, y.re, FP2_ENCODED_BYTES / 2);
-    encode_digits(enc + FP2_ENCODED_BYTES / 2, y.im, FP2_ENCODED_BYTES / 2);
+    // TODO: Check whether NWORDS_ORDER is the best way to define the length of the array
+    digit_t a[NWORDS_ORDER];
+    fp_to_digit_array(a, y.re);
+    encode_digits(enc, a, FP2_ENCODED_BYTES / 2);
+    fp_to_digit_array(a, y.im);
+    encode_digits(enc + FP2_ENCODED_BYTES / 2, a, FP2_ENCODED_BYTES / 2);
 }
 
 void fp2_decode(const unsigned char *x, fp2_t *dec)
 {
-    decode_digits(dec->re, x, FP2_ENCODED_BYTES / 2, NWORDS_FIELD);
-    decode_digits(dec->im, x + FP2_ENCODED_BYTES / 2, FP2_ENCODED_BYTES / 2, NWORDS_FIELD);
+    // TODO: Check whether NWORDS_ORDER is the best way to define the length of the array
+    digit_t a[NWORDS_ORDER];
+    decode_digits(a, x, FP2_ENCODED_BYTES / 2, NWORDS_ORDER);
+    fp_from_digit_array(dec->re, a);
+    decode_digits(a, x + FP2_ENCODED_BYTES / 2, FP2_ENCODED_BYTES / 2, NWORDS_ORDER);
+    fp_from_digit_array(dec->im, a);
     fp2_tomont(dec, dec);
 }
 
@@ -436,7 +444,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsi
 
     //FIXME omits some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3).
     {
-        digit_t digits[NWORDS_FIELD];
+        digit_t digits[NWORDS_ORDER];
 
         //FIXME should use SHAKE128 for smaller parameter sets?
         SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + length);

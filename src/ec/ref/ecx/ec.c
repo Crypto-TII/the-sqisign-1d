@@ -367,7 +367,7 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
 }
 
-void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
+void ec_ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
 {
     // Curve constant in the form A24=(A+2C:4C)
     ec_point_t A24;
@@ -382,7 +382,7 @@ void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t c
 
 	int i,j;
     digit_t t;
-	for (i = 0; i < NWORDS_FIELD; i++)
+	for (i = 0; i < NWORDS_ORDER; i++)
 	{
 		t = 1;
 		for (j = 0 ; j < RADIX; j++)

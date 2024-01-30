@@ -77,7 +77,7 @@ void protocols_commit(quat_left_ideal_t *ideal, ec_curve_t *E1, ec_basis_t *basi
         for (size_t i = 0; i < sizeof(TORSION_ODD_PRIMES)/sizeof(*TORSION_ODD_PRIMES); ++i)
             isogeny.degree[i] = DEGREE_COMMITMENT_POWERS[i];
 
-        digit_t scalars_plus[2][NWORDS_FIELD], scalars_minus[2][NWORDS_FIELD];
+        digit_t scalars_plus[2][NWORDS_ORDER], scalars_minus[2][NWORDS_ORDER];
         ibz_mod(&tmp, &vec[0], &DEGREE_COMMITMENT_PLUS);
         ibz_to_digit_array(scalars_plus[0], &tmp);
         ibz_mod(&tmp, &vec[1], &DEGREE_COMMITMENT_PLUS);
@@ -114,7 +114,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
     ec_basis_t pushedbasis2, pushedbasis3;
     ec_curve_to_basis_6(&E1basis6, E1);
     {
-        digit_t scalar[NWORDS_FIELD];
+        digit_t scalar[NWORDS_ORDER];
         ibz_to_digit_array(scalar, &TORSION_PLUS_3POWER);
         ec_mul(&E1basis2.P, E1, scalar, &E1basis6.P);
         ec_mul(&E1basis2.Q, E1, scalar, &E1basis6.Q);
@@ -134,14 +134,14 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
     // compute the kernel of the challenge isogeny
     ec_point_t ker;
     {
-        digit_t scalars[2][NWORDS_FIELD];
+        digit_t scalars[2][NWORDS_ORDER];
         ibz_to_digit_array(scalars[0], &(*hash)[0]);
         ibz_to_digit_array(scalars[1], &(*hash)[1]);
         ec_biscalar_mul(&ker, E1, scalars[0], scalars[1], &E1basis6);
     }
     ec_point_t ker2, ker3;
     {
-        digit_t scalar[NWORDS_FIELD];
+        digit_t scalar[NWORDS_ORDER];
         ibz_to_digit_array(scalar, &TORSION_PLUS_3POWER);
         ec_mul(&ker2, E1, scalar, &ker);
         ibz_to_digit_array(scalar, &TORSION_PLUS_2POWER);
@@ -154,7 +154,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
         ibz_vec_2_t vec2, vec3;
         ibz_vec_2_init(&vec2);
         ibz_vec_2_init(&vec3);
-        digit_t log[2][NWORDS_FIELD];
+        digit_t log[2][NWORDS_ORDER];
 
         ec_dlog_2(log[0], log[1], &pushedbasis2, &ker2, E1);
 
@@ -189,7 +189,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
                 pts[0] = bit2 ? E1basis6.Q : E1basis6.P;
             }
             else {
-                digit_t scalars[2][NWORDS_FIELD];
+                digit_t scalars[2][NWORDS_ORDER];
                 ibz_to_digit_array(scalars[bit3], &TORSION_PLUS_2POWER);
                 ibz_to_digit_array(scalars[bit2], &TORSION_PLUS_3POWER);
                 ec_biscalar_mul(&pts[0], E1, scalars[0], scalars[1], &E1basis6);
@@ -224,7 +224,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
 
         // set up the 2-power and 3-power bases as images of the 2*3*-torsion one
         {
-            digit_t scalar[NWORDS_FIELD];
+            digit_t scalar[NWORDS_ORDER];
             ibz_to_digit_array(scalar, &TORSION_PLUS_3POWER);
             ec_mul(&E2basis2.P, &E2, scalar, &E2basis6.P);
             ec_mul(&E2basis2.Q, &E2, scalar, &E2basis6.Q);
@@ -237,7 +237,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
 
         // compute the 2-power and 3-power parts of the kernel of the dual
         {
-            digit_t scalar[NWORDS_FIELD];
+            digit_t scalar[NWORDS_ORDER];
             ibz_to_digit_array(scalar, &TORSION_PLUS_2POWER);
             ec_mul(&pts[1], &E2, scalar, &pts[0]);
             ibz_to_digit_array(scalar, &TORSION_PLUS_3POWER);
@@ -246,7 +246,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
 
         // now compute the logarithms
         {
-            digit_t scalars[2][NWORDS_FIELD];
+            digit_t scalars[2][NWORDS_ORDER];
 
             ec_dlog_2(scalars[0], scalars[1], &E2basis2, &pts[0], &E2);
             ibz_copy_digit_array(&vec2[0], scalars[0]);
@@ -312,7 +312,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
         R = bit2 ? E2basis6.Q : E2basis6.P;
     }
     else {
-        digit_t scalars[2][NWORDS_FIELD];
+        digit_t scalars[2][NWORDS_ORDER];
         ibz_to_digit_array(scalars[bit3], &TORSION_PLUS_2POWER);
         ibz_to_digit_array(scalars[bit2], &TORSION_PLUS_3POWER);
         ec_biscalar_mul(&R, &E2, scalars[0], scalars[1], &E2basis6);
@@ -371,7 +371,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
     {
         ec_point_t R2, R3;
         {
-            digit_t scalar[NWORDS_FIELD];
+            digit_t scalar[NWORDS_ORDER];
             ibz_to_digit_array(scalar, &TORSION_PLUS_3POWER);
             ec_mul(&R2, E1, scalar, &R);
             ibz_to_digit_array(scalar, &TORSION_PLUS_2POWER);
@@ -382,7 +382,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
         ibz_vec_2_init(&log2);
         ibz_vec_2_init(&log3);
         {
-            digit_t scalars[2][NWORDS_FIELD] = {0};
+            digit_t scalars[2][NWORDS_ORDER] = {0};
             ec_dlog_2(scalars[0], scalars[1], &E1basis2, &R2, E1);
 #ifndef NDEBUG
 {
@@ -438,7 +438,7 @@ ibz_finalize(&rhs);
 //ibz_printf("r2 = %#Zx\n", &r2);
 #ifndef NDEBUG
 {
-    digit_t scalar[NWORDS_FIELD];
+    digit_t scalar[NWORDS_ORDER];
     ibz_to_digit_array(scalar, &r2);
     ec_point_t T1, T2;
     ec_mul(&T1, E1, scalar, &R);
@@ -456,7 +456,7 @@ ibz_finalize(&rhs);
 //ibz_printf("r3 = %#Zx\n", &r3);
 #ifndef NDEBUG
 {
-    digit_t scalar[NWORDS_FIELD];
+    digit_t scalar[NWORDS_ORDER];
     ibz_to_digit_array(scalar, &r3);
     ec_point_t T1, T2;
     ec_mul(&T1, E1, scalar, &R);
@@ -469,7 +469,7 @@ ibz_finalize(&rhs);
                 ibz_crt(&r, &r2, &r3, &TORSION_PLUS_2POWER, &TORSION_PLUS_3POWER);
                 // check if we mixed up the signs and correct it in that case
                 {
-                    digit_t scalar[NWORDS_FIELD];
+                    digit_t scalar[NWORDS_ORDER];
                     ibz_to_digit_array(scalar, &r);
                     ec_point_t T;
                     ec_mul(&T, E1, scalar, &R);
@@ -490,7 +490,7 @@ ibz_finalize(&rhs);
     }
 #ifndef NDEBUG
 {
-    digit_t scalar[NWORDS_FIELD];
+    digit_t scalar[NWORDS_ORDER];
     ibz_to_digit_array(scalar, &r);
     ec_point_t T;
     ec_mul(&T, E1, scalar, &R);

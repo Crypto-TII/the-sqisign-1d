@@ -18,9 +18,9 @@ bool curve_equal(ec_curve_t* E1, ec_curve_t* E2){
 	return fp2_is_equal(&a, &b);
 }
 
-void random_scalar(fp_t k)
+void random_scalar(digit_t* k)
 {
-    for(int i = 0; i < NWORDS_FIELD; i++)
+    for(int i = 0; i < NWORDS_ORDER; i++)
         k[i] = rand();
 }
 
@@ -72,7 +72,7 @@ void coeff(fp2_t *B, ec_curve_t const *E)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
+void ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -81,7 +81,7 @@ void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t cons
 
 	int i,j;
 	digit_t t;
-	for (i = 0; i < NWORDS_FIELD; i++)
+	for (i = 0; i < NWORDS_ORDER; i++)
 	{
 		t = 1;
 		for (j = 0 ; j < RADIX; j++)

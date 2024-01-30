@@ -58,7 +58,7 @@ void protocols_verif_unpack_chall(ec_curve_t *E2, ec_point_t *dual, const signat
 
     // 2^f-isogeny chains
     ec_point_t K;
-    digit_t scalar[NWORDS_FIELD];
+    digit_t scalar[NWORDS_ORDER];
     ec_curve_t E;
     ec_isog_even_t isog2;
     fp2_copy(&E.A, &pk->E.A);
@@ -145,7 +145,7 @@ int protocols_verif_from_chall(const signature_t *sig, ec_curve_t const *E2, con
         push_points[0] = bit2 ? B6.Q : B6.P;
     }
     else {
-        digit_t scalars[2][NWORDS_FIELD];
+        digit_t scalars[2][NWORDS_ORDER];
         ibz_to_digit_array(scalars[bit3], &TORSION_PLUS_2POWER);
         ibz_to_digit_array(scalars[bit2], &TORSION_PLUS_3POWER);
         ec_biscalar_mul(&push_points[0], E2, scalars[0], scalars[1], &B6);
@@ -196,7 +196,7 @@ assert(!fp2_is_zero(&E1.C));
     ibz_vec_2_t vec;
     ibz_vec_2_init(&vec);
     hash_to_challenge(&vec, &E1, m, l);
-    digit_t scalars[2][NWORDS_FIELD];
+    digit_t scalars[2][NWORDS_ORDER];
     ibz_to_digit_array(scalars[0], &vec[0]);
     ibz_to_digit_array(scalars[1], &vec[1]);
     ec_biscalar_mul(&K, &E1, scalars[0], scalars[1], &B6);

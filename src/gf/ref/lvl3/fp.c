@@ -182,3 +182,11 @@ void fp_sqrt(digit_t* a)
     fp_exp3div4(t, a);
     fp_mul(a, t, a);    // a^((p+1)/4)
 }
+
+void fp_to_digit_array(digit_t* out, const digit_t* a) {
+    memcpy(out, a, NWORDS_FIELD*RADIX/8);
+}
+
+void fp_from_digit_array(digit_t* out, const digit_t* a) {
+    memcpy(out, a, NWORDS_FIELD*RADIX/8);
+}

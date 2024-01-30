@@ -1,25 +1,9 @@
 #include "poly.h"
 #include <assert.h>
 #include <stdio.h>
+#include "test_extras.h"
+
 #define nmax 32
-
-bool fp2_isequal(fp2_t a, fp2_t b){
-    return fp_is_equal(a.re, b.re) && fp_is_equal(a.im, b.im);
-}
-
-// VERY NOT SECURE (testing only)
-void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
-    // Update seed
-    srand((unsigned) a->re[0]);
-}
 
 int main(){
   fp2_t fp2_0, fp2_1;
@@ -42,7 +26,7 @@ int main(){
     // Get random poly
     f = malloc(sizeof(fp2_t)*lenf);
     for(e = 0; e < lenf; e++)
-      fp2_random(&f[e]);
+      fp2random_test(&f[e]);
 
     for(n = 1; n < nmax; n++)
     {
@@ -53,7 +37,7 @@ int main(){
       poly_mul_low(h, n, f, lenf, h, n);
 
       // Compare with expected
-      assert(fp2_isequal(h[0],c));
+      assert(fp2_is_equal(&(h[0]),&c));
       for(e = 1;  e < n; e++)
 	assert(fp2_is_zero(&h[e]));
       free(h);
@@ -76,7 +60,7 @@ int main(){
     f_rev = malloc(sizeof(fp2_t)*lenf);
     for(e = 0; e < lenf; e++)
     {
-      fp2_random(&f[e]);
+      fp2random_test(&f[e]);
       fp2_copy(&f_rev[lenf-1-e], &f[e]);
     }
 
@@ -85,7 +69,7 @@ int main(){
       // Get random poly to reduce
       g = malloc(sizeof(fp2_t)*leng);
       for(e = 0; e < leng; e++){
-	fp2_random(&g[e]);
+	fp2random_test(&g[e]);
       }
 
       // Get reverse-inverse mod x^(leng-lenf+1)
@@ -136,7 +120,7 @@ int main(){
 
       // Comapre results
       for(e = leng_red-1; e >= 0; e--)
-	      assert(fp2_isequal(h[e], g[e]));
+	      assert(fp2_is_equal(&(h[e]), &(g[e])));
       for(e = leng_red; e < lenf-1; e++)
 	      assert(fp2_is_zero(&h[e]));
       
@@ -179,7 +163,7 @@ int main(){
     {
       F[i] = malloc(sizeof(fp2_t)*LENF);
       for(e = 0; e < LENF; e++){
-	      fp2_random(&F[i][e]);
+	      fp2random_test(&F[i][e]);
       }
     }
     
@@ -199,7 +183,7 @@ int main(){
       fp2_set(&f[e], 0);
     }
     poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-    assert(fp2_isequal(f[0], A[root]));
+    assert(fp2_is_equal(&(f[0]), &(A[root])));
     for(e = 1; e < lenf; e++){
       assert(fp2_is_zero(&f[e]));
     }
@@ -236,7 +220,7 @@ int main(){
 	    fp2_set(&f[e], 0);
     }
 	  poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-	  assert(fp2_isequal(f[0], A[root]));
+	  assert(fp2_is_equal(&(f[0]), &(A[root])));
 	  for(e = 1; e < lenf; e++){
 	    assert(fp2_is_zero(&f[e]));
     }
@@ -287,7 +271,7 @@ int main(){
     {
       F[i] = malloc(sizeof(fp2_t)*LENF);
       for(e = 0; e < LENF; e++)
-	fp2_random(&F[i][e]);
+	fp2random_test(&F[i][e]);
     }
     
     // Get product tree, reciprocal tree, and remainders
@@ -297,8 +281,8 @@ int main(){
     g2 = malloc(sizeof(fp2_t)*leng);
     for(e = 0; e < leng; e++)
     {
-      fp2_random(&g1[e]);
-      fp2_random(&g2[e]);
+      fp2random_test(&g1[e]);
+      fp2random_test(&g2[e]);
     }
     reciprocal_tree(R, A, leng, H, DEG, 0, tree_size);
     multieval_unscaled(REM1, g1, leng, R, (const fp2_t*)A, H, DEG, 0, tree_size);
@@ -328,7 +312,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&(REM1[i]), &ratio));
     }
 		 
     // Clean up
@@ -376,7 +360,7 @@ int main(){
     {
       F[i] = malloc(sizeof(fp2_t)*LENF);
       for(e = 0; e < LENF; e++)
-	fp2_random(&F[i][e]);
+	fp2random_test(&F[i][e]);
     }
     
     // Get random polys to reduce
@@ -386,8 +370,8 @@ int main(){
     g2 = malloc(sizeof(fp2_t)*leng);
     for(e = 0; e < leng; e++)
     {
-      fp2_random(&g1[e]);
-      fp2_random(&g2[e]);
+      fp2random_test(&g1[e]);
+      fp2random_test(&g2[e]);
     }
 
     // Get the required initial nodes
@@ -445,7 +429,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&(REM1[i]), &ratio));
     }
 		 
     // Clean up

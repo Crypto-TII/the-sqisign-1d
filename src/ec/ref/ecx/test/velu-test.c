@@ -8,9 +8,9 @@
 #include "ec.h"
 #include "test-basis.h"
 
-void random_scalar(fp_t k, const uint8_t j)
+void random_scalar(digit_t* k, const uint8_t j)
 {
-    for(int i = 0; i < NWORDS_FIELD; i++)
+    for(int i = 0; i < NWORDS_ORDER; i++)
         k[i] = rand();
 }
 
@@ -47,7 +47,7 @@ uint8_t isrational(ec_point_t const T, fp2_t const a)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
+void ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -56,7 +56,7 @@ void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t cons
 
 	int i,j;
 	digit_t t;
-	for (i = 0; i < NWORDS_FIELD; i++)
+	for (i = 0; i < NWORDS_ORDER; i++)
 	{
 		t = 1;
 		for (j = 0 ; j < RADIX; j++)

@@ -4,6 +4,8 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/broadwell AND SQISIGN_BUILD_TYPE MATCHES "
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/broadwell)
 elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/opt AND SQISIGN_BUILD_TYPE MATCHES "opt")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opt)
+elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/mike AND SQISIGN_BUILD_TYPE MATCHES "mike")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mike)
 elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ref)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ref)
 else()

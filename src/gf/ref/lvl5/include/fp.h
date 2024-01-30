@@ -30,6 +30,8 @@ void fp_sqrt(digit_t* a);
 void fp_tomont(digit_t* out, const digit_t* a);
 void fp_frommont(digit_t* out, const digit_t* a);
 void fp_mont_setone(digit_t* out);
+void fp_to_digit_array(digit_t* out, const digit_t* a);
+void fp_from_digit_array(digit_t* out, const digit_t* a);
 
 /********************** Constant-time unsigned comparisons ***********************/
 

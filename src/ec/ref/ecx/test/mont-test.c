@@ -5,7 +5,8 @@
 #include "ec.h"
 #include "isog.h"
 #include "test-basis.h"
-#include <bench.h> 
+#include <bench.h>
+#include "test_extras.h"
 
 static int BENCH_LOOPS = 1000;       // Number of iterations per bench
 static int TEST_LOOPS  = 128;       // Number of iterations per test
@@ -18,20 +19,6 @@ static int TEST_LOOPS  = 128;       // Number of iterations per test
 //                 randombytes((void *)k, keyspace_bytes[j]);
 //         } while (fp_issmaller((uint64_t *)k, keyspace_size[j]));
 // }
-
-// VERY NOT SECURE (testing only)
-void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
-    // Update seed
-    srand((unsigned) a->re[0]);
-}
 
 // Affine Montgomery coefficient computation (A + 2C : 4C) --> A/C
 void coeff(fp2_t *B, ec_point_t const A)
@@ -66,7 +53,7 @@ uint8_t isrational(ec_point_t const T, fp2_t const a)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t* R, fp_t const m, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A)
+void ladder3pt(ec_point_t* R, const digit_t* m, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -75,7 +62,7 @@ void ladder3pt(ec_point_t* R, fp_t const m, ec_point_t const* P, ec_point_t cons
 
 	int i,j;
 	digit_t t;
-	for (i = 0; i < NWORDS_FIELD; i++)
+	for (i = 0; i < NWORDS_ORDER; i++)
 	{
 		t = 1;
 		for (j = 0 ; j < RADIX; j++)
@@ -285,7 +272,7 @@ int main(int argc, char* argv[])
 		printf("[%3d%%] Testing EC differential arithmetic", 100 * j / TEST_LOOPS);
 		fflush(stdout);
 		printf("\r\x1b[K");
-		fp2_random(&m);
+		fp2random_test(&m);
 		ladder3pt(&(R[0]), m.re, &PA, &QA, &PQA, &A);
 		assert( isrational(R[0], a) );
 		for (k = 0; k < P_LEN; k++)
@@ -305,7 +292,7 @@ int main(int argc, char* argv[])
 			assert( isinfinity(R[i]) );		// It must be now the point at infinity
 		};
 
-		fp2_random(&m);
+		fp2random_test(&m);
 		ladder3pt(&(R[P_LEN]), m.re, &PB, &QB, &PQB, &A);
 		assert( !isrational(R[P_LEN], a) );
 		for (k = P_LEN; k < (P_LEN+M_LEN); k++)
@@ -335,10 +322,10 @@ int main(int argc, char* argv[])
     cycles = 0;
 	ec_point_t PP[TEST_LOOPS], EE[TEST_LOOPS];
 	for(int i = 0; i < TEST_LOOPS; i++){
-		fp2_random(&PP[i].x);
-		fp2_random(&PP[i].z);
-		fp2_random(&EE[i].x);
-		fp2_random(&EE[i].z);
+		fp2random_test(&PP[i].x);
+		fp2random_test(&PP[i].z);
+		fp2random_test(&EE[i].x);
+		fp2random_test(&EE[i].z);
 	}
     cycles1 = cpucycles(); 
 	for(int i = 0; i < TEST_LOOPS; i++){
@@ -353,12 +340,12 @@ int main(int argc, char* argv[])
     cycles = 0;
 	ec_point_t KK0[TEST_LOOPS], KK1[TEST_LOOPS], KK2[TEST_LOOPS];
 	for(int i = 0; i < TEST_LOOPS; i++){
-		fp2_random(&KK0[i].x);
-		fp2_random(&KK0[i].z);
-		fp2_random(&KK1[i].x);
-		fp2_random(&KK1[i].z);
-		fp2_random(&KK2[i].x);
-		fp2_random(&KK2[i].z);
+		fp2random_test(&KK0[i].x);
+		fp2random_test(&KK0[i].z);
+		fp2random_test(&KK1[i].x);
+		fp2random_test(&KK1[i].z);
+		fp2random_test(&KK2[i].x);
+		fp2random_test(&KK2[i].z);
 	}
     cycles1 = cpucycles(); 
 	for(int i = 0; i < TEST_LOOPS; i++){

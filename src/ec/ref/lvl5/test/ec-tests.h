@@ -2,6 +2,7 @@
 #define EC_TESTS_H
 
 #include "test_extras.h"
+#include <curve_extras.h>
 #include <stdio.h>
 #include <string.h>
 #include <bench.h>       //////// NOTE: enable later
@@ -161,8 +162,8 @@ bool dlog_test()
     fp_set(PQ.z.im, 0);
 
     AC.C.re[0] = 0x01;
-    fp_copy(f1, TWOpFm1);
-    fp_copy(f2, TWOpF);
+    memcpy(f1, TWOpFm1, NWORDS_ORDER*RADIX/8);
+    memcpy(f2, TWOpF, NWORDS_ORDER*RADIX/8);
     fp2_tomont(&AC.C, &AC.C);
 
     copy_point(&PQ2.P, &P);
@@ -225,8 +226,8 @@ bool dlog_test()
     fp_set(PQ.z.im, 0);
 
     AC.C.re[0] = 0x01;
-    fp_copy(tpFdiv2, THREEpFdiv2);
-    fp_copy(tpF, THREEpF);
+    memcpy(tpFdiv2, THREEpFdiv2, NWORDS_ORDER*RADIX/8);
+    memcpy(tpF, THREEpF, NWORDS_ORDER*RADIX/8);
     fp2_tomont(&AC.C, &AC.C);
 
     copy_point(&PQ2.P, &P);

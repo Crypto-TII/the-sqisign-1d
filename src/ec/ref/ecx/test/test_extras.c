@@ -51,6 +51,7 @@ void sub_test(digit_t* out, digit_t* a, digit_t* b, unsigned int nwords)
 void fprandom_test(digit_t* a)
 { // Generating a pseudo-random field element in [0, p-1] 
   // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
+#if defined(ARITH_REF) || defined(ARITH_BROADWELL)
     unsigned int i, diff = 256-254, nwords = NWORDS_FIELD;
     unsigned char* string = NULL;
 
@@ -63,6 +64,22 @@ void fprandom_test(digit_t* a)
     while (compare_words((digit_t*)p, a, nwords) < 1) {  // Force it to [0, modulus-1]
         sub_test(a, a, (digit_t*)p, nwords);
     }
+#elif defined(ARITH_MIKE)
+    unsigned int i, diff = 256-254;
+    unsigned char* string = NULL;
+    digit_t b[NWORDS_ORDER];
+
+    string = (unsigned char*)b;
+    for (i = 0; i < sizeof(digit_t)*NWORDS_ORDER; i++) {
+        *(string + i) = (unsigned char)rand();
+    }
+    b[NWORDS_ORDER - 1] &= (((digit_t)(-1) << diff) >> diff);
+
+    while (compare_words((digit_t*)p, b, NWORDS_ORDER) < 1) {  // Force it to [0, modulus-1]
+        sub_test(b, b, (digit_t*)p, NWORDS_ORDER);
+    }
+    fp_from_digit_array(a, b);
+#endif
 }
 
 
