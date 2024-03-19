@@ -51,29 +51,55 @@ int ec_is_on_curve(const ec_curve_t* curve, const ec_point_t* P){
 }
 
 static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point_t* Q, const ec_curve_t* curve){
-    // Given P,Q in affine x-only, computes a deterministic choice for (P-Q)
-    // The points must be normalized to z=1 and the curve to C=1
+    // Given P,Q in projective x-only, computes a deterministic choice for (P-Q)
+    // Based on Proposition 3 of https://eprint.iacr.org/2017/518.pdf
 
-    fp2_t t0, t1, t2, t3;
-    
-    fp2_sub(&PQ->z, &P->x, &Q->x);  // P - Q
-    fp2_mul(&t2, &P->x, &Q->x);     // P*Q
-    fp_mont_setone(t1.re);
-    fp_set(t1.im, 0);
-    fp2_sub(&t3, &t2, &t1);         // P*Q-1
-    fp2_mul(&t0, &PQ->z, &t3);      // (P-Q)*(P*Q-1)
-    fp2_sqr(&PQ->z, &PQ->z);        // (P-Q)^2
-    fp2_sqr(&t0, &t0);              // (P-Q)^2*(P*Q-1)^2
-    fp2_add(&t1, &t2, &t1);         // P*Q+1
-    fp2_add(&t3, &P->x, &Q->x);     // P+Q
-    fp2_mul(&t1, &t1, &t3);         // (P+Q)*(P*Q+1)
-    fp2_mul(&t2, &t2, &curve->A);   // A*P*Q
-    fp2_add(&t2, &t2, &t2);         // 2*A*P*Q
-    fp2_add(&t1, &t1, &t2);         // (P+Q)*(P*Q+1) + 2*A*P*Q
-    fp2_sqr(&t2, &t1);              // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2
-    fp2_sub(&t0, &t2, &t0);         // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2 - (P-Q)^2*(P*Q-1)^2
+    fp2_t Bxx, Bxz, Bzz, t0, t1;
+
+    fp2_mul(&t0, &P->x, &Q->x);
+    fp2_mul(&t1, &P->z, &Q->z);
+    fp2_sub(&Bxx, &t0, &t1);
+    fp2_sqr(&Bxx, &Bxx);
+    fp2_mul(&Bxx, &Bxx, &curve->C); // C*(P.x*Q.x-P.z*Q.z)^2
+    fp2_add(&Bxz, &t0, &t1);
+    fp2_mul(&t0, &P->x, &Q->z);
+    fp2_mul(&t1, &P->z, &Q->x);
+    fp2_add(&Bzz, &t0, &t1);
+    fp2_mul(&Bxz, &Bxz, &Bzz); // (P.x*Q.x+P.z*Q.z)(P.x*Q.z+P.z*Q.x)
+    fp2_sub(&Bzz, &t0, &t1);
+    fp2_sqr(&Bzz, &Bzz);
+    fp2_mul(&Bzz, &Bzz, &curve->C); // C*(P.x*Q.z-P.z*Q.x)^2
+    fp2_mul(&Bxz, &Bxz, &curve->C); // C*(P.x*Q.x+P.z*Q.z)(P.x*Q.z+P.z*Q.x)
+    fp2_mul(&t0, &t0, &t1);
+    fp2_mul(&t0, &t0, &curve->A);
+    fp2_add(&t0, &t0, &t0);
+    fp2_add(&Bxz, &Bxz, &t0); // C*(P.x*Q.x+P.z*Q.z)(P.x*Q.z+P.z*Q.x) + 2*A*P.x*Q.z*P.z*Q.x
+
+    // Normalization: our squareroot always has the same sign as long as P.z, Q.z, and C
+    // are in Fp and C is a square, so the B's should be scaled by C*C_bar^2*P.z_bar^2*Q.Z_bar^2
+    fp_copy(t0.re, curve->C.re);
+    fp_neg(t0.im, curve->C.im);
+    fp2_sqr(&t0, &t0);
+    fp2_mul(&t0, &t0, &curve->C);
+    fp_copy(t1.re, P->z.re);
+    fp_neg(t1.im, P->z.im);
+    fp2_sqr(&t1, &t1);
+    fp2_mul(&t0, &t0, &t1);
+    fp_copy(t1.re, Q->z.re);
+    fp_neg(t1.im, Q->z.im);
+    fp2_sqr(&t1, &t1);
+    fp2_mul(&t0, &t0, &t1);
+    fp2_mul(&Bxx, &Bxx, &t0);
+    fp2_mul(&Bxz, &Bxz, &t0);
+    fp2_mul(&Bzz, &Bzz, &t0);
+
+    // Solving quadratic equation
+    fp2_sqr(&t0, &Bxz); 
+    fp2_mul(&t1, &Bxx, &Bzz);
+    fp2_sub(&t0, &t0, &t1);
     fp2_sqrt(&t0);
-    fp2_add(&PQ->x, &t0, &t1);
+    fp2_add(&PQ->x, &Bxz, &t0);
+    fp2_copy(&PQ->z, &Bzz);
 }
 
 void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
@@ -158,26 +184,8 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
             break;
     }
 
-    // Normalize points
-    ec_curve_t E;
-    fp2_mul(&t0, &P.z, &Q.z);
-    fp2_mul(&t1, &t0, &curve->C);
-    fp2_inv(&t1);
-    fp2_mul(&P.x, &P.x, &t1);
-    fp2_mul(&Q.x, &Q.x, &t1);
-    fp2_mul(&E.A, &curve->A, &t1);
-    fp2_mul(&P.x, &P.x, &Q.z);
-    fp2_mul(&P.x, &P.x, &curve->C);
-    fp2_mul(&Q.x, &Q.x, &P.z);
-    fp2_mul(&Q.x, &Q.x, &curve->C);
-    fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
-    fp2_copy(&Q.z, &P.z);
-    fp2_copy(&E.C, &P.z);
-
     // Compute P-Q
-    difference_point(&PQ2->PmQ, &P, &Q, &E);
+    difference_point(&PQ2->PmQ, &P, &Q, curve);
     copy_point(&PQ2->P, &P);
     copy_point(&PQ2->Q, &Q);
 }
@@ -237,29 +245,10 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
             break;
     }
 
-    // Normalize points
-    ec_curve_t E;
-    ec_point_t PP;
-    fp2_mul(&t0, &P->z, &Q.z);
-    fp2_mul(&t1, &t0, &curve->C);
-    fp2_inv(&t1);
-    fp2_mul(&PP.x, &P->x, &t1);
-    fp2_mul(&Q.x, &Q.x, &t1);
-    fp2_mul(&E.A, &curve->A, &t1);
-    fp2_mul(&PP.x, &PP.x, &Q.z);
-    fp2_mul(&PP.x, &PP.x, &curve->C);
-    fp2_mul(&Q.x, &Q.x, &P->z);
-    fp2_mul(&Q.x, &Q.x, &curve->C);
-    fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(PP.z.re);
-    fp_set(PP.z.im, 0);
-    fp2_copy(&Q.z, &PP.z);
-    fp2_copy(&E.C, &PP.z);
-
     // Compute P-Q
-    difference_point(&PQ2->PmQ, &PP, &Q, &E);
-    copy_point(&PQ2->P, &PP);
+    difference_point(&PQ2->PmQ, P, &Q, curve);
     copy_point(&PQ2->Q, &Q);
+    copy_point(&PQ2->P, P);
 }
 
 void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
@@ -352,26 +341,8 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
             break;
     }
 
-    // Normalize points
-    ec_curve_t E;
-    fp2_mul(&t0, &P.z, &Q.z);
-    fp2_mul(&t1, &t0, &curve->C);
-    fp2_inv(&t1);
-    fp2_mul(&P.x, &P.x, &t1);
-    fp2_mul(&Q.x, &Q.x, &t1);
-    fp2_mul(&E.A, &curve->A, &t1);
-    fp2_mul(&P.x, &P.x, &Q.z);
-    fp2_mul(&P.x, &P.x, &curve->C);
-    fp2_mul(&Q.x, &Q.x, &P.z);
-    fp2_mul(&Q.x, &Q.x, &curve->C);
-    fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
-    fp2_copy(&Q.z, &P.z);
-    fp2_copy(&E.C, &P.z);
-
     // Compute P-Q
-    difference_point(&PQ3->PmQ, &P, &Q, &E);
+    difference_point(&PQ3->PmQ, &P, &Q, curve);
     copy_point(&PQ3->P, &P);
     copy_point(&PQ3->Q, &Q);
 }
@@ -483,26 +454,8 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         break;
     }
 
-    // Normalize points
-    ec_curve_t E;
-    fp2_mul(&t0, &P.z, &Q.z);
-    fp2_mul(&t1, &t0, &curve->C);
-    fp2_inv(&t1);
-    fp2_mul(&P.x, &P.x, &t1);
-    fp2_mul(&Q.x, &Q.x, &t1);
-    fp2_mul(&E.A, &curve->A, &t1);
-    fp2_mul(&P.x, &P.x, &Q.z);
-    fp2_mul(&P.x, &P.x, &curve->C);
-    fp2_mul(&Q.x, &Q.x, &P.z);
-    fp2_mul(&Q.x, &Q.x, &curve->C);
-    fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
-    fp2_copy(&Q.z, &P.z);
-    fp2_copy(&E.C, &P.z);
-
     // Compute P-Q
-    difference_point(&PQ6->PmQ, &P, &Q, &E);
+    difference_point(&PQ6->PmQ, &P, &Q, curve);
     copy_point(&PQ6->P, &P);
     copy_point(&PQ6->Q, &Q);
 }
