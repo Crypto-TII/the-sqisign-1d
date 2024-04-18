@@ -49,8 +49,7 @@ int test_challenge()
     signature_t sig = {{0}, {0xcafecafecafecafe}, {0xcc, {0xdeadbeef}, {0xdeadbeef}}};
 #endif
     {
-        ibz_vec_2_t vec;
-        ibz_vec_2_init(&vec);
+        digit_vec_2_t vec;
 
         char msg[] = "Hello, world!";
         hash_to_challenge(&vec, &E1, (unsigned char *) msg, strlen(msg));
@@ -76,7 +75,6 @@ for (ssize_t i = sizeof(sig.s.scalar3)/sizeof(*sig.s.scalar3)-1; i >= 0; --i)
 printf("\n");
 }
 }
-        ibz_vec_2_finalize(&vec);
     }
 
     quat_left_ideal_finalize(&ideal_comm);

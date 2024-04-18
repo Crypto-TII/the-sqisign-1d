@@ -1,5 +1,6 @@
 #include <protocols.h>
 #include <inttypes.h>
+#include <assert.h>
 
 static inline void copy_point(ec_point_t* A, const ec_point_t* B){
     fp2_copy(&A->x, &B->x);
@@ -58,23 +59,20 @@ void protocols_verif_unpack_chall(ec_curve_t *E2, ec_point_t *dual, const signat
 
     // 2^f-isogeny chains
     ec_point_t K;
-    digit_t scalar[NWORDS_ORDER];
     ec_curve_t E;
     ec_isog_even_t isog2;
     fp2_copy(&E.A, &pk->E.A);
     fp2_copy(&E.C, &pk->E.C);
     isog2.length = POWER_OF_2;
     for(size_t i = 0; i < sig->zip.length-1; i++){        
-        ibz_to_digit_array(scalar, &sig->zip.zip_chain[i]);
-        ec_ladder3pt(&K, scalar, &B2.Q, &B2.P, &B2.PmQ, &E);
+        ec_ladder3pt(&K, sig->zip.zip_chain[i], &B2.Q, &B2.P, &B2.PmQ, &E);
         copy_point(&isog2.kernel, &K);
         fp2_copy(&isog2.curve.A, &E.A);
         fp2_copy(&isog2.curve.C, &E.C);
         ec_eval_even(&E, &isog2, &B2.P, 1);
         ec_complete_basis_2(&B2, &E, &B2.P);
     }   
-    ibz_to_digit_array(scalar, &sig->zip.zip_chain[sig->zip.length-1]);
-    ec_ladder3pt(&K, scalar, &B2.Q, &B2.P, &B2.PmQ, &E);
+    ec_ladder3pt(&K, sig->zip.zip_chain[sig->zip.length-1], &B2.Q, &B2.P, &B2.PmQ, &E);
     copy_point(&isog2.kernel, &K);
     fp2_copy(&isog2.curve.A, &E.A);
     fp2_copy(&isog2.curve.C, &E.C);
@@ -145,9 +143,9 @@ int protocols_verif_from_chall(const signature_t *sig, ec_curve_t const *E2, con
         push_points[0] = bit2 ? B6.Q : B6.P;
     }
     else {
-        digit_t scalars[2][NWORDS_ORDER];
-        ibz_to_digit_array(scalars[bit3], &TORSION_PLUS_2POWER);
-        ibz_to_digit_array(scalars[bit2], &TORSION_PLUS_3POWER);
+        const digit_t *scalars[2];
+        scalars[bit3] = TORSION_PLUS_2POWER_DIGITS;
+        scalars[bit2] = TORSION_PLUS_3POWER_DIGITS;
         ec_biscalar_mul(&push_points[0], E2, scalars[0], scalars[1], &B6);
     }
     copy_point(&push_points[1], &K3);
@@ -193,14 +191,9 @@ assert(!fp2_is_zero(&E1.C));
 
     // Recover original challenge kernel point from the hash
     ec_point_t K;
-    ibz_vec_2_t vec;
-    ibz_vec_2_init(&vec);
-    hash_to_challenge(&vec, &E1, m, l);
-    digit_t scalars[2][NWORDS_ORDER];
-    ibz_to_digit_array(scalars[0], &vec[0]);
-    ibz_to_digit_array(scalars[1], &vec[1]);
+    digit_vec_2_t scalars;
+    hash_to_challenge(&scalars, &E1, m, l);
     ec_biscalar_mul(&K, &E1, scalars[0], scalars[1], &B6);
-    ibz_vec_2_finalize(&vec);
 assert(!fp2_is_zero(&K.z));
 
     // Multiply Q by r

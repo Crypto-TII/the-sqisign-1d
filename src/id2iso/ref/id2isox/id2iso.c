@@ -1,11 +1,14 @@
+#include <id2iso.h>
+#if defined(ENABLE_SIGN)
 #include <quaternion.h>
 #include <ec.h>
 #include <endomorphism_action.h>
-#include <id2iso.h>
 #include <inttypes.h>
 #include <locale.h> 
 #include <bench.h>
+#endif
 
+#if defined(ENABLE_SIGN)
 static __inline__ uint64_t rdtsc(void)
 {
     return (uint64_t) cpucycles();
@@ -69,21 +72,19 @@ void id2iso_long_two_isog_finalize(id2iso_long_two_isog_t *isog)
 {
     free(isog->chain);
 }
+#endif
 
 void id2iso_compressed_long_two_isog_init(id2iso_compressed_long_two_isog_t *zip, const size_t length)
 {
     zip->length = length;
-    zip->zip_chain = malloc(length * sizeof(*zip->zip_chain));
-    for (size_t i = 0; i < length; ++i)
-        ibz_init(&zip->zip_chain[i]);
 }
 
 void id2iso_compressed_long_two_isog_finalize(id2iso_compressed_long_two_isog_t *zip)
 {
-    for (size_t i = 0; i < zip->length; ++i)
-        ibz_finalize(&zip->zip_chain[i]);
-    free(zip->zip_chain);
+    (void)zip;
 }
+
+#if defined(ENABLE_SIGN)
 
 /**
  * @brief evaluation of an endomorphism beta of norm dividing T² on the 2^f torsion
@@ -595,7 +596,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
                 ibz_mul(&linear_comb[ind][0],&linear_comb[ind][0],&linear_comb[ind][1]);
                 ibz_mod(&linear_comb[ind][0],&linear_comb[ind][0],&ibz_two_f);
                 ibz_copy(&linear_comb[ind][1],&ibz_const_one);
-                ibz_copy(&isog_zip->zip_chain[ind],&linear_comb[ind][0]);
+                ibz_to_digit_array(isog_zip->zip_chain[ind], &linear_comb[ind][0]); // ibz_mod always returns a non-negative value
             }
 
             // computation of the kernel
@@ -644,7 +645,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
                     }
                     ibz_mul(&ibz_b,&ibz_b,&ibz_a);
                     ibz_mod(&ibz_b,&ibz_b,&ibz_two_f);
-                    ibz_copy(&isog_zip->zip_chain[ind],&ibz_b);
+                    ibz_to_digit_array(isog_zip->zip_chain[ind], &ibz_b); // ibz_mod always returns a non-negative value
                     // and we can set the kernel dual to be temp_two_basis.Q
                     temp_kernel_dual = temp_two_basis.Q;
 
@@ -659,7 +660,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
                     }
                     ibz_mul(&ibz_a,&ibz_b,&ibz_a);
                     ibz_mod(&ibz_a,&ibz_a,&ibz_two_f);
-                    ibz_copy(&isog_zip->zip_chain[ind],&ibz_a);
+                    ibz_to_digit_array(isog_zip->zip_chain[ind], &ibz_a); // ibz_mod always returns a non-negative value
                     // and we can set the kernel dual to be temp_two_basis.P
                     temp_kernel_dual = temp_two_basis.P;
                     
@@ -1093,4 +1094,4 @@ void id2iso_kernel_dlogs_to_ideal(quat_left_ideal_t *lideal, const ibz_vec_2_t *
     quat_alg_elem_finalize(&gen);
 }
 
-
+#endif

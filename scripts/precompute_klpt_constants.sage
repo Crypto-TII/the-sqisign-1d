@@ -17,6 +17,7 @@ logT = ceil(log(Tpls*Tmin, 2))
 tors2val = (p+1).valuation(2)
 
 defs = dict()
+defs_verif = dict()
 
 # lideal_equiv
 
@@ -79,7 +80,7 @@ defs['SQISIGN_response_attempts'] = 64
 
 defs['SQISIGN_random_length'] = 0
 defs['SQISIGN_signing_total_length'] = defs['KLPT_signing_klpt_length']
-defs['SQISIGN_signing_length'] = ZZ(defs['SQISIGN_signing_total_length'] / tors2val)
+defs_verif['SQISIGN_signing_length'] = ZZ(defs['SQISIGN_signing_total_length'] / tors2val)
 defs['SQISIGN_keygen_length'] = ZZ(defs['KLPT_keygen_length'] / tors2val)
 
 # prime data for Cornacchia
@@ -100,15 +101,20 @@ objs = ObjectFormatter([
 
 with open('include/klpt_constants.h','w') as hfile:
     with open('klpt_constants.c','w') as cfile:
-        print(f'#include <intbig.h>', file=hfile)
-        print(f'#include <stddef.h>', file=cfile)
-        print(f'#include <stdint.h>', file=cfile)
-        print(f'#include <klpt_constants.h>', file=cfile)
 
+        for k,v in defs_verif.items():
+            v = ZZ(v)
+            print(f'#define {k} {v}', file=hfile)
+        print(f'#if defined(ENABLE_SIGN)', file=hfile)
+        print(f'#include <intbig.h>', file=hfile)
         for k,v in defs.items():
             v = ZZ(v)
             print(f'#define {k} {v}', file=hfile)
-
         objs.header(file=hfile)
+        print(f'#endif', file=hfile)
+
+        print(f'#include <stddef.h>', file=cfile)
+        print(f'#include <stdint.h>', file=cfile)
+        print(f'#include <klpt_constants.h>', file=cfile)
         objs.implementation(file=cfile)
 

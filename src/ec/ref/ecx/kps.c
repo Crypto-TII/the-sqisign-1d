@@ -2,6 +2,8 @@
 #include "curve_extras.h"
 #include <assert.h>
 
+#if defined(ENABLE_SIGN)
+
 int sI, sJ, sK;	// Sizes of each current I, J, and K	
 
 fp2_t I[sI_max][2],		// I plays also as the linear factors of the polynomial h_I(X)
@@ -23,6 +25,12 @@ int deg_ptree_hI[(1 << (ceil_log_sI_max+2)) - 1],	// degree of each noed in the 
 
 fp2_t leaves[sI_max];		// leaves of the remainder tree, which are required in the Resultant computation
 
+#else
+
+ec_point_t K[3];	
+
+#endif
+
 // -----------------------------------------------------------
 // -----------------------------------------------------------
 // Traditional Kernel Point computation (KPs)
@@ -36,6 +44,15 @@ void kps_4(ec_point_t const P)
 	fp2_add(&K[0].z, &K[0].x, &K[0].x);
 	fp2_add(&K[0].x, &K[0].z, &K[0].z);
 }
+
+// Kernel computation required in the degree-3 isogeny evaluation
+void kps_3(ec_point_t const P)
+{
+	fp2_sub(&K[0].x, &P.x, &P.z);
+	fp2_add(&K[1].x, &P.x, &P.z);
+}
+
+#if defined(ENABLE_SIGN)
 
 void eds2mont(ec_point_t* P)
 {
@@ -226,3 +243,11 @@ void kps_clear(int i){
 			clear_tree(ptree_hI, 0, sizeI[i]);
 		}
 }
+
+#else
+
+void kps_clear(int i){
+	return;
+}
+
+#endif

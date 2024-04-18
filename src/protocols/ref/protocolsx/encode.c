@@ -2,6 +2,7 @@
 #include <tutil.h>
 #include <protocols.h>
 #include <fp_constants.h>
+#include <assert.h>
 
 
 // digits
@@ -36,6 +37,7 @@ static void decode_digits(digit_t* dec, const unsigned char* x, size_t nbytes, s
 }
 
 
+#if defined(ENABLE_SIGN)
 // ibz_t
 
 static void ibz_encode(unsigned char *enc, const ibz_t *x, size_t nbytes)
@@ -110,6 +112,7 @@ static void ibz_decode(ibz_t* dec, const unsigned char *x, size_t nbytes)
         ibz_copy_digits(dec, d, ndigits);
     }
 }
+#endif
 
 
 // fp2_t
@@ -175,6 +178,7 @@ static void ec_curve_decode(const unsigned char *enc, ec_curve_t* curve)
     proj_decode(enc, &curve->A, &curve->C);
 }
 
+#if defined(ENABLE_SIGN)
 static void ec_point_encode(unsigned char *enc, const ec_point_t* point)
 {
     proj_encode(&point->x, &point->z, enc);
@@ -231,6 +235,7 @@ static void quat_alg_elem_decode(quat_alg_elem_t* elt, const unsigned char *enc)
     enc += QUAT_ALG_ELEM_ENCODED_BYTES;
     ibz_decode(&elt->coord[3], enc, QUAT_ALG_ELEM_ENCODED_BYTES);
 }
+#endif
 
 
 // compressed isogeny chains
@@ -240,7 +245,7 @@ static void id2iso_compressed_long_two_isog_encode(const id2iso_compressed_long_
 unsigned char *const start = enc;
     assert(isog->length == ZIP_CHAIN_LEN);
     for (int i = 0; i < ZIP_CHAIN_LEN; ++i) {
-        ibz_encode(enc, &isog->zip_chain[i], ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES);
+        encode_digits(enc, isog->zip_chain[i], ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES);
         enc += ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES;
     }
     *enc++ = isog->bit_first_step;
@@ -251,7 +256,7 @@ static void id2iso_compressed_long_two_isog_decode(const unsigned char *enc, id2
 {
 const unsigned char *const start = enc;
     for (int i = 0; i < ZIP_CHAIN_LEN; ++i) {
-        ibz_decode(&isog->zip_chain[i], enc, ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES);
+        decode_digits(isog->zip_chain[i], enc, ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES, NWORDS_ORDER);
         enc += ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES;
     }
     isog->bit_first_step = *enc++;
@@ -285,6 +290,7 @@ void public_key_decode(public_key_t* pk, const unsigned char *enc)
 }
 
 
+#if defined(ENABLE_SIGN)
 /**
  * @brief Encodes a secret key to a byte array
  *
@@ -382,6 +388,7 @@ static void secret_key_populate_full(secret_key_t* sk)
     ibz_finalize(&norm_small);
     ibz_finalize(&norm_two);
 }
+#endif
 
 
 /**
@@ -432,7 +439,7 @@ assert(enc - start == SIGNATURE_LEN);
 
 #include <fips202.h>
 
-void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length)
+void hash_to_challenge(digit_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length)
 {
     unsigned char *buf = malloc(FP2_ENCODED_BYTES + length);
     {
@@ -444,25 +451,33 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsi
 
     //FIXME omits some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3).
     {
-        digit_t digits[NWORDS_ORDER];
+        //The code below implicitly assumes a little-endian ordering; check when working on big-endian version
 
         //FIXME should use SHAKE128 for smaller parameter sets?
-        SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + length);
+        SHAKE256((void *) (*scalars)[1], NWORDS_ORDER * sizeof(digit_t), buf, FP2_ENCODED_BYTES + length);
 
-        ibz_set(&(*scalars)[0], 1); //FIXME
-        ibz_copy_digit_array(&(*scalars)[1], digits);
+        //FIXME
+        memset((*scalars)[0], 0, NWORDS_ORDER * sizeof(digit_t));
+        (*scalars)[0][0] = 1;
     }
 
 #ifndef NDEBUG
+#if defined(ENABLE_SIGN)
 {
 ibz_t gcd;
 ibz_init(&gcd);
+ibz_vec_2_t scalars_ibz;
+ibz_vec_2_init(&scalars_ibz);
+ibz_copy_digit_array(&scalars_ibz[0], (*scalars)[0]);
+ibz_copy_digit_array(&scalars_ibz[1], (*scalars)[1]);
 ibz_set(&gcd, 6);
-ibz_gcd(&gcd, &gcd, &(*scalars)[0]);
-ibz_gcd(&gcd, &gcd, &(*scalars)[1]);
+ibz_gcd(&gcd, &gcd, &scalars_ibz[0]);
+ibz_gcd(&gcd, &gcd, &scalars_ibz[1]);
 assert(ibz_is_one(&gcd));
 ibz_finalize(&gcd);
+ibz_vec_2_finalize(&scalars_ibz);
 }
+#endif
 #endif
 
     free(buf);

@@ -7,4 +7,6 @@ add_library(${LIB_ID2ISO_${SVARIANT_UPPER}} ${SOURCE_FILES_ID2ISO_GENERIC_REF})
 target_include_directories(${LIB_ID2ISO_${SVARIANT_UPPER}} PRIVATE common ${INC_PUBLIC} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_QUATERNION} ${INC_KLPT} ${INC_GF} ${INC_GF_${SVARIANT_UPPER}} ${INC_EC} ${INC_ID2ISO} ${INC_COMMON})
 target_compile_options(${LIB_ID2ISO_${SVARIANT_UPPER}} PRIVATE ${C_OPT_FLAGS})
 
-add_subdirectory(test)
+if(ENABLE_SIGN)
+    add_subdirectory(test)
+endif()

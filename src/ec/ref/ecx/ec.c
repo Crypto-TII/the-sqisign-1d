@@ -1,6 +1,6 @@
 #include "curve_extras.h"
-#include "tedwards.h"
 #include <ec_params.h>
+#include <torsion_constants.h>
 #include <assert.h>
 
 bool ec_is_zero(ec_point_t const* P)
@@ -600,7 +600,7 @@ void recover_y(fp2_t* y, fp2_t const* Px, ec_curve_t const* curve)
 }
 
 
-static int mp_compare(digit_t* a, digit_t* b, unsigned int nwords)
+static int mp_compare(const digit_t* a, const digit_t* b, unsigned int nwords)
 { // Multiprecision comparison, a=b? : (1) a>b, (0) a=b, (-1) a<b
 
     for (int i = nwords-1; i >= 0; i--) {
@@ -1392,9 +1392,9 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
     if (mp_compare(scalarP, THREEpFdiv2, NWORDS_ORDER) == 1 ||
        (mp_compare(scalarQ, THREEpFdiv2, NWORDS_ORDER) == 1 && (mp_is_zero(scalarP, NWORDS_ORDER) == 1))) {
         if (mp_is_zero(scalarP, NWORDS_ORDER) != 1)
-            mp_sub(scalarP, THREEpF, scalarP, NWORDS_ORDER);
+            mp_sub(scalarP, TORSION_PLUS_3POWER_DIGITS, scalarP, NWORDS_ORDER);
         if (mp_is_zero(scalarQ, NWORDS_ORDER) != 1)
-            mp_sub(scalarQ, THREEpF, scalarQ, NWORDS_ORDER);
+            mp_sub(scalarQ, TORSION_PLUS_3POWER_DIGITS, scalarQ, NWORDS_ORDER);
     }
 }
 

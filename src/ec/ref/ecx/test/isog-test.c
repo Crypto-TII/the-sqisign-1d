@@ -805,6 +805,8 @@ int main(int argc, char* argv[])
 	}
 	printf("[%2d%%] Tested 3^g-isogenies:\t\tNo errors!\n", 100);
 
+#if defined(ENABLE_SIGN)
+
 	// ----------------- TEST FOR ODD-DEGREE ISOGENIES ----------------- //
 
 	for(int iter = 0; iter < TEST_LOOPS/10; iter++){
@@ -941,6 +943,8 @@ int main(int argc, char* argv[])
 			assert(isog.degree[i] == TORSION_ODD_POWERS[i]);
 	}
 	printf("[%2d%%] Tested odd-degree isogenies:\tNo errors!\n", 100);
+
+#endif
 
 	// ----------------- TEST FOR ISOMORPHISMS ----------------- //
 

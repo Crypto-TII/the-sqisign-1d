@@ -112,15 +112,12 @@ int test_verif_from_chall()
 #endif
     ec_curve_t E2;
     {
-        ibz_vec_2_t vec;
-        ibz_vec_2_init(&vec);
+        digit_vec_2_t vec;
 
         hash_to_challenge(&vec, &E1, (unsigned char *) msg, strlen(msg));
 //ibz_vec_2_print(&vec);
 
         protocols_challenge(&ideal_chall, &sig, &E1, &E1basis, &vec, &E2);
-
-        ibz_vec_2_finalize(&vec);
     }
 
     ec_point_t dual;

@@ -27,12 +27,17 @@ defs = {
         'TORSION_23POWER_BYTES': (int(tors23part).bit_length() + 7) // 8,
     }
 
-from cformat import Ibz, Object, ObjectFormatter
+from cformat import Ibz, FpEl, Object, ObjectFormatter
 
-objs = ObjectFormatter([
+objs_verif = ObjectFormatter([
         Object('digit_t', 'TORSION_PLUS_EVEN_POWER', int(f)),
         Object('digit_t[]', 'TORSION_ODD_PRIMES', Lpls + Lmin),
         Object('digit_t[]', 'TORSION_ODD_POWERS', Epls + Emin),
+        Object('digit_t', 'TORSION_PLUS_2POWER_DIGITS[NWORDS_ORDER]', FpEl(tors2part, p)),
+        Object('digit_t', 'TORSION_PLUS_3POWER_DIGITS[NWORDS_ORDER]', FpEl(tors3part, p)),
+    ])
+
+objs = ObjectFormatter([
         Object('digit_t[]', 'TORSION_PLUS_ODD_PRIMES', Lpls),      # TODO deduplicate?
         Object('size_t[]', 'TORSION_PLUS_ODD_POWERS', Epls),        # TODO deduplicate?
         Object('digit_t[]', 'TORSION_MINUS_ODD_PRIMES', Lmin),     # TODO deduplicate?
@@ -54,14 +59,22 @@ objs = ObjectFormatter([
 
 with open('include/torsion_constants.h','w') as hfile:
     with open('torsion_constants.c','w') as cfile:
+
+        print(f'#include <tutil.h>', file=hfile)
+        print(f'#include "fp_constants.h"', file=hfile)
+        for k,v in defs.items():
+            print(f'#define {k} {v}', file=hfile)
+        objs_verif.header(file=hfile)
+        print(f'#if defined(ENABLE_SIGN)', file=hfile)
         print(f'#include <intbig.h>', file=hfile)
+        objs.header(file=hfile)
+        print(f'#endif', file=hfile)
+
         print(f'#include <stddef.h>', file=cfile)
         print(f'#include <stdint.h>', file=cfile)
         print(f'#include <torsion_constants.h>', file=cfile)
-
-        for k,v in defs.items():
-            print(f'#define {k} {v}', file=hfile)
-
-        objs.header(file=hfile)
+        objs_verif.implementation(file=cfile)
+        print(f'#if defined(ENABLE_SIGN)', file=cfile)
         objs.implementation(file=cfile)
+        print(f'#endif', file=cfile)
 

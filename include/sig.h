@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#if defined(ENABLE_SIGN)
 /**
  * SQIsign keypair generation.
  *
@@ -34,6 +35,7 @@ int sqisign_keypair(unsigned char *pk, unsigned char *sk);
 int sqisign_sign(unsigned char *sm,
               unsigned long long *smlen, const unsigned char *m,
               unsigned long long mlen, const unsigned char *sk);
+#endif
 
 /**
  * SQIsign open signature.

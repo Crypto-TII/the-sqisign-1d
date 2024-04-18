@@ -32,6 +32,7 @@ const unsigned long long mlen_lvl1 = 33;
 #error "Not supported"
 #endif
 
+#if defined(ENABLE_SIGN)
 static int test_sqisign_keygen() {
     int res = 0;
     unsigned char *pk  = calloc(CRYPTO_PUBLICKEYBYTES, 1);
@@ -60,6 +61,7 @@ static int test_sqisign_sign(int mlen) {
     free(sig);
     return res;
 }
+#endif
 
 
 static int test_sqisign_open(int mlen) {
@@ -90,12 +92,23 @@ int main(int argc, char *argv[]) {
 
     int ar = atoi(argv[1]);
 
-    if (ar == 0)
+    if (ar == 0) {
+#if defined(ENABLE_SIGN)
         return test_sqisign_keygen();
-    else if (ar == 1)
+#else
+        fprintf(stderr, "Not supported: built with signature disabled\n");
+        return -1;
+#endif
+    } else if (ar == 1) {
+#if defined(ENABLE_SIGN)
         return test_sqisign_sign(mlen_lvl1);
-    else if (ar == 2)
+#else
+        fprintf(stderr, "Not supported: built with signature disabled\n");
+        return -1;
+#endif
+    } else if (ar == 2) {
         return test_sqisign_open(mlen_lvl1);
+    }
     
     printf("Usage: <1(keygen)/2(sign)/3(open)>\n");
     return 0;

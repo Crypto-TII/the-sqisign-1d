@@ -2,6 +2,9 @@
 #define _ISOG_H_
 
 #include "curve_extras.h"
+#include "assert.h"
+
+#if defined(ENABLE_SIGN)
 #include "poly.h"
 
 extern int sI, sJ, sK;	// Sizes of each current I, J, and K	
@@ -25,6 +28,48 @@ extern int deg_ptree_hI[(1 << (ceil_log_sI_max+2)) - 1],	// degree of each noed 
 
 extern fp2_t leaves[sI_max];		// leaves of the remainder tree, which are required in the Resultant computation
 
+#else
+
+extern ec_point_t K[3];	
+
+#endif
+
+void kps_4(ec_point_t const P);
+void kps_3(ec_point_t const P);
+
+void xisog_4(ec_point_t* B, ec_point_t const P);			// degree-4 isogeny construction
+void xisog_4_singular(ec_point_t* B24, ec_point_t const P, ec_point_t A24);
+void xisog_2(ec_point_t* B, ec_point_t const P);			// degree-2 isogeny construction
+void xisog_3(ec_point_t* B);			// degree-3 isogeny construction
+
+void xeval_4(ec_point_t* R, const ec_point_t* Q, const int lenQ);					// degree-4 isogeny evaluation
+void xeval_4_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ, const ec_point_t P);
+void xeval_2(ec_point_t* R, ec_point_t* const Q, const int lenQ);	// degree-2 isogeny evaluation
+void xeval_3(ec_point_t* R, ec_point_t const Q);	// degree-3 isogeny evaluation
+
+// Strategy-based 4-isogeny chain
+static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigned short points_len,
+    ec_point_t* A24, const ec_point_t *kernel, const int isog_len);
+
+#ifndef ENABLE_SIGN
+// Odd isogenies are always degree 3
+static inline void kps(int i, ec_point_t const P, ec_point_t const A)	
+{
+	assert(i==0);
+	kps_3(P);
+}
+
+static inline void xisog(ec_point_t* B, int i, ec_point_t const A)
+{
+	xisog_3(B);
+}
+
+static inline void xeval(ec_point_t* Q, int i, ec_point_t const P, ec_point_t const A)
+{
+	xeval_3(Q, P);
+}
+
+#else
 
 void eds2mont(ec_point_t* P);						// mapping from Twisted edwards into Montogmery
 void yadd(ec_point_t* R, ec_point_t* const P, ec_point_t* const Q, ec_point_t* const PQ);	// differential addition on Twisted edwards model
@@ -33,23 +78,11 @@ void CrissCross(fp2_t *r0, fp2_t *r1, fp2_t const alpha, fp2_t const beta, fp2_t
 void kps_t(int i, ec_point_t const P, ec_point_t const A);	// tvelu formulae
 void kps_s(int i, ec_point_t const P, ec_point_t const A);	// svelu formulae
 
-void xisog_4(ec_point_t* B, ec_point_t const P);			// degree-4 isogeny construction
-void xisog_4_singular(ec_point_t* B24, ec_point_t const P, ec_point_t A24);
-void xisog_2(ec_point_t* B, ec_point_t const P);			// degree-2 isogeny construction
 void xisog_t(ec_point_t* B, int i, ec_point_t const A);	// tvelu formulae
 void xisog_s(ec_point_t* B, int i, ec_point_t const A);	// svelu formulae
 
-void xeval_4(ec_point_t* R, const ec_point_t* Q, const int lenQ);					// degree-4 isogeny evaluation
-void xeval_4_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ, const ec_point_t P);
-void xeval_2(ec_point_t* R, ec_point_t* const Q, const int lenQ);	// degree-2 isogeny evaluation
 void xeval_t(ec_point_t* Q, int i, ec_point_t const P);			// tvelu formulae
 void xeval_s(ec_point_t* Q, int i, ec_point_t const P, ec_point_t const A);	// svelu formulae
-
-// Strategy-based 4-isogeny chain
-static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigned short points_len,
-    ec_point_t* A24, const ec_point_t *kernel, const int isog_len);
-
-void kps_clear(int i);	// Clear memory assigned by KPS
 
 
 // hybrid velu formulae
@@ -80,5 +113,8 @@ static inline void xeval(ec_point_t* Q, int i, ec_point_t const P, ec_point_t co
 		xeval_s(Q, i, P, A);
 }
 
+#endif
+
+void kps_clear(int i);	// Clear memory assigned by KPS
 
 #endif

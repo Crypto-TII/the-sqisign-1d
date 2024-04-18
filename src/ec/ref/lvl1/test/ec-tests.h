@@ -8,6 +8,7 @@
 #include <bench.h>       //////// NOTE: enable later
 #include "test-basis.h"
 #include "ec_params.h"
+#include <torsion_constants.h>
 
 // Global constants
 extern const digit_t p[NWORDS_FIELD];
@@ -346,7 +347,7 @@ bool dlog_test()
 
     AC.C.re[0] = 0x01;
     memcpy(f1, TWOpFm1, NWORDS_ORDER*RADIX/8);
-    memcpy(f2, TWOpF, NWORDS_ORDER*RADIX/8);
+    memcpy(f2, TORSION_PLUS_2POWER_DIGITS, NWORDS_ORDER*RADIX/8);
     fp2_tomont(&AC.C, &AC.C);
 
     copy_point(&PQ2.P, &P);
@@ -410,7 +411,7 @@ bool dlog_test()
 
     AC.C.re[0] = 0x01;
     memcpy(tpFdiv2, THREEpFdiv2, NWORDS_ORDER*RADIX/8);
-    memcpy(tpF, THREEpF, NWORDS_ORDER*RADIX/8);
+    memcpy(tpF, TORSION_PLUS_3POWER_DIGITS, NWORDS_ORDER*RADIX/8);
     fp2_tomont(&AC.C, &AC.C);
 
     copy_point(&PQ2.P, &P);

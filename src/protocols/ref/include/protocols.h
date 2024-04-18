@@ -8,19 +8,23 @@
 #ifndef PROTOCOLS_H
 #define PROTOCOLS_H
 
-#include <intbig.h>
-#include <quaternion.h>
 #include <klpt_constants.h>
-#include <quaternion_data.h>
 #include <torsion_constants.h>
-#include <rng.h>
-#include <endomorphism_action.h>
 #include <encoded_sizes.h>
 #include <fp_constants.h>
 
 #include <stdio.h>
-#include <klpt.h>
 #include <id2iso.h>
+
+#if defined(ENABLE_SIGN)
+#include <intbig.h>
+#include <quaternion.h>
+#include <quaternion_data.h>
+#include <rng.h>
+#include <endomorphism_action.h>
+
+#include <klpt.h>
+#endif
 
 /** @defgroup protocols_protocols SQIsign protocols
  * @{
@@ -59,6 +63,7 @@ typedef struct public_key {
 	ec_curve_t E; /// the normalized A coefficient of the Montgomery curve
 } public_key_t;
 
+#if defined(ENABLE_SIGN)
 /** @brief Type for the secret keys
  * 
  * @typedef secret_key_t
@@ -75,7 +80,13 @@ typedef struct secret_key {
     ec_basis_t basis_plus; /// basis pushed through phi_two
     ec_basis_t basis_minus; /// basis pushed through phi_two
 } secret_key_t;
+#endif
 
+/** @brief Type for vector of 2 scalars
+ * 
+ * @typedef digit_vec_2_t
+*/
+typedef digit_t digit_vec_2_t[2][NWORDS_ORDER];
 
 /** @}
 */
@@ -84,16 +95,26 @@ typedef struct secret_key {
 /*************************** Functions *****************************/
 
 
+#if defined(ENABLE_SIGN)
 void secret_key_init(secret_key_t *sk);
 void secret_key_finalize(secret_key_t *sk);
+#endif
 
-void signature_init(signature_t *sig);
-void signature_finalize(signature_t *sig);
+static inline void signature_init(signature_t *sig)
+{
+    id2iso_compressed_long_two_isog_init(&sig->zip, SQISIGN_signing_length);
+}
+
+static inline void signature_finalize(signature_t *sig)
+{
+    id2iso_compressed_long_two_isog_finalize(&sig->zip);
+}
 
 /** @defgroup signature The signature protocol
  * @{
 */
 
+#if defined(ENABLE_SIGN)
 /**
  * @brief Computing a key pair
  *
@@ -113,6 +134,7 @@ int protocols_keygen(public_key_t *pk, secret_key_t *sk);
 sogeny
  */
 void protocols_commit(quat_left_ideal_t *ideal, ec_curve_t *E1, ec_basis_t *basis);
+#endif
 
 /**
  * @brief Hashing a commitment curve and a message to a challenge
@@ -123,9 +145,10 @@ orsion basis of the commitment curve
  * @param message: byte string to be signed
  * @param length: length of the message
  */
-void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length);
+void hash_to_challenge(digit_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length);
 
 
+#if defined(ENABLE_SIGN)
 /**
  * @brief Computing a challenge isogeny from a commitment curve
  *
@@ -140,7 +163,7 @@ he commitment isogeny
  * @param out_E2: optional output (can be NULL) to store the value of the challenge curve for
  testing and debugging
  */
-void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_curve_t *E1, const ec_basis_t *pushedbasis6, const ibz_vec_2_t *hash, ec_curve_t *out_E2);
+void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_curve_t *E1, const ec_basis_t *pushedbasis6, const digit_vec_2_t *hash, ec_curve_t *out_E2);
 
 
 /**
@@ -154,6 +177,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
  * @returns a bit indicating if the computation succeeded  
     */
 int protocols_sign(signature_t *sig,const public_key_t *pk, const secret_key_t *sk,const unsigned char* m, size_t l);
+#endif
 
 
 /** @}
@@ -219,6 +243,7 @@ int protocols_verif(const signature_t *sig,const public_key_t *pk,const unsigned
     */
 void public_key_encode(unsigned char *enc, const public_key_t* pk);
 
+#if defined(ENABLE_SIGN)
 /**
  * @brief Encodes a secret key as a byte array
  *
@@ -227,6 +252,7 @@ void public_key_encode(unsigned char *enc, const public_key_t* pk);
  * @param pk : public key
   */
 void secret_key_encode(unsigned char *enc, const secret_key_t* sk, const public_key_t* pk);
+#endif
 
 /**
  * @brief Encodes a signature as a byte array
@@ -244,6 +270,7 @@ void signature_encode(unsigned char* enc, const signature_t* sig);
     */
 void public_key_decode(public_key_t* pk, const unsigned char *enc);
 
+#if defined(ENABLE_SIGN)
 /**
  * @brief Encodes a secret key (and public key) as a byte array
  *
@@ -252,6 +279,7 @@ void public_key_decode(public_key_t* pk, const unsigned char *enc);
  * @param enc : encoded secret key
     */
 void secret_key_decode(secret_key_t* sk, public_key_t* pk, const unsigned char *enc);
+#endif
 
 /**
  * @brief Encodes a signature as a byte array

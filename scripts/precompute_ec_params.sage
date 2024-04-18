@@ -86,19 +86,17 @@ sizeK = '{'+', '.join([str(s) for s in sizeK])+'}'
 ################################################################
 
 FpEls = {
-    'TWOpF':2**f,
     'TWOpFm1': 2**(f-1),
     'THREEpE': 3**(g//2),
-    'THREEpF': 3**g,
     'THREEpFdiv2': (3**g)//2,
     'p_cofactor_for_2f': (p+1)//(2**f),
     'p_cofactor_for_3g': (p+1)//(3**g),
     'p_cofactor_for_6fg': (p+1)//(2**f*3**g)
 }
 
-from cformat import FpEl, ObjectStatic, ObjectFormatter
+from cformat import FpEl, Object, ObjectFormatter
 objs = ObjectFormatter(
-    [ObjectStatic('digit_t', f'{k}[NWORDS_ORDER]', FpEl(v, p))
+    [Object('digit_t', f'{k}[NWORDS_ORDER]', FpEl(v, p))
     for k,v in FpEls.items()]
     )
 
@@ -106,41 +104,61 @@ objs = ObjectFormatter(
 
 
 with open('include/ec_params.h', 'w') as hfile:
+    with open('ec_params.c','w') as cfile:
 
-    print('#ifndef EC_PARAMS_H', file=hfile)
-    print('#define EC_PARAMS_H', file=hfile)
-    print('',file=hfile)
-    print('#include <fp_constants.h>', file=hfile)
-    print('',file=hfile)
-    print(f'#define POWER_OF_2 {f}', file=hfile)
-    print(f'#define POWER_OF_3 {g}', file=hfile)
-    print('',file=hfile)
-    print('#define scaled 1', file=hfile)
-    print('#define gap 83', file=hfile)
-    print('',file=hfile)
-    print(f'#define P_LEN {len(Lpls)}', file=hfile)
-    print(f'#define M_LEN {len(Lmin)}', file=hfile)
-    print('',file=hfile)
-    print('static digit_t p_plus_minus_bitlength[P_LEN + M_LEN] =\n\t'+bL+';', file=hfile)
-    print('',file=hfile)
-    print(f'static digit_t STRATEGY4[] =\n\t'+strategy4+';', file=hfile)
-    print('',file=hfile)
-    print(f'static digit_t sizeI[] =\n\t'+sizeI+';', file=hfile)
-    print(f'static digit_t sizeJ[] =\n\t'+sizeJ+';', file=hfile)
-    print(f'static digit_t sizeK[] =\n\t'+sizeK+';', file=hfile)
-    print('',file=hfile)
-    print(f'#define sI_max {sImax}', file=hfile)
-    print(f'#define sJ_max {sJmax}', file=hfile)
-    print(f'#define sK_max {max(sKmax, 41)}', file=hfile)
-    print('',file=hfile)
-    print(f'#define ceil_log_sI_max {ceil(log(sImax,2))}', file=hfile)
-    print(f'#define ceil_log_sJ_max {ceil(log(sJmax,2))}', file=hfile)
-    print('',file=hfile)
-    objs.implementation(file=hfile)
-    print('',file=hfile)
-    print(f'#define P_COFACTOR_FOR_2F_BITLENGTH {ceil(log((p+1)//(2**f),2))}', file=hfile)
-    print(f'#define P_COFACTOR_FOR_3G_BITLENGTH {ceil(log((p+1)//(3**g),2))}', file=hfile)
-    print(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {ceil(log((p+1)//(2**f*3**g),2))}', file=hfile)
-    print('',file=hfile)
-    print('#endif', file=hfile)
+        print('#include <ec_params.h>', file=cfile)
+        print('',file=cfile)
 
+        print('#ifndef EC_PARAMS_H', file=hfile)
+        print('#define EC_PARAMS_H', file=hfile)
+        print('',file=hfile)
+        print('#include <tutil.h>', file=hfile)
+        print('#include <fp_constants.h>', file=hfile)
+        print('',file=hfile)
+        print(f'#define POWER_OF_2 {f}', file=hfile)
+        print(f'#define POWER_OF_3 {g}', file=hfile)
+        print('',file=hfile)
+        print('#define scaled 1', file=hfile)
+        print('#define gap 83', file=hfile)
+        print('',file=hfile)
+        print(f'#define P_LEN {len(Lpls)}', file=hfile)
+        print(f'#define M_LEN {len(Lmin)}', file=hfile)
+        print('',file=hfile)
+
+        print('const digit_t p_plus_minus_bitlength[P_LEN + M_LEN] =\n\t'+bL+';', file=cfile)
+        print('',file=cfile)
+        print(f'const digit_t STRATEGY4[] =\n\t'+strategy4+';', file=cfile)
+        print('',file=cfile)
+        print(f'const digit_t sizeI[] =\n\t'+sizeI+';', file=cfile)
+        print(f'const digit_t sizeJ[] =\n\t'+sizeJ+';', file=cfile)
+        print(f'const digit_t sizeK[] =\n\t'+sizeK+';', file=cfile)
+        print('',file=cfile)
+
+        print('extern const digit_t p_plus_minus_bitlength[P_LEN + M_LEN];', file=hfile)
+        print('',file=hfile)
+        print(f'extern const digit_t STRATEGY4[];', file=hfile)
+        print('',file=hfile)
+        print(f'extern const digit_t sizeI[];', file=hfile)
+        print(f'extern const digit_t sizeJ[];', file=hfile)
+        print(f'extern const digit_t sizeK[];', file=hfile)
+        print('',file=hfile)
+
+        print(f'#define sI_max {sImax}', file=hfile)
+        print(f'#define sJ_max {sJmax}', file=hfile)
+        print(f'#define sK_max {max(sKmax, 41)}', file=hfile)
+        print('',file=hfile)
+        print(f'#define ceil_log_sI_max {ceil(log(sImax,2))}', file=hfile)
+        print(f'#define ceil_log_sJ_max {ceil(log(sJmax,2))}', file=hfile)
+        print('',file=hfile)
+
+        objs.implementation(file=cfile)
+        print('',file=cfile)
+        objs.header(file=hfile)
+        print('',file=hfile)
+
+        print(f'#define P_COFACTOR_FOR_2F_BITLENGTH {ceil(log((p+1)//(2**f),2))}', file=hfile)
+        print(f'#define P_COFACTOR_FOR_3G_BITLENGTH {ceil(log((p+1)//(3**g),2))}', file=hfile)
+        print(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {ceil(log((p+1)//(2**f*3**g),2))}', file=hfile)
+
+        print('',file=hfile)
+        print('#endif', file=hfile)

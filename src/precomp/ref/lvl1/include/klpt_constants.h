@@ -1,3 +1,5 @@
+#define SQISIGN_signing_length 14
+#if defined(ENABLE_SIGN)
 #include <intbig.h>
 #define KLPT_equiv_bound_coeff 6
 #define KLPT_equiv_num_iter 28561
@@ -21,7 +23,7 @@
 #define SQISIGN_response_attempts 64
 #define SQISIGN_random_length 0
 #define SQISIGN_signing_total_length 1050
-#define SQISIGN_signing_length 14
 #define SQISIGN_keygen_length 9
 extern const short SMALL_PRIMES_1MOD4[11];
 extern const ibz_t PROD_SMALL_PRIMES_3MOD4;
+#endif

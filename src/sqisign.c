@@ -1,6 +1,7 @@
 #include <protocols.h>
 #include <string.h>
 
+#if defined(ENABLE_SIGN)
 int sqisign_keypair(unsigned char *pk, unsigned char *sk) { 
     int ret;
     secret_key_t skt;
@@ -36,6 +37,7 @@ int sqisign_sign(unsigned char *sm,
     signature_finalize(&sigt);
     return ret;
 }
+#endif
 
 int sqisign_open(unsigned char *m,
               unsigned long long *mlen, const unsigned char *sm,

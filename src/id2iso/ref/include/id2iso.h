@@ -8,9 +8,13 @@
 #ifndef ID2ISO_H
 #define ID2ISO_H
 
+#include <encoded_sizes.h>
+
+#if defined(ENABLE_SIGN)
 #include <intbig.h>
 #include <quaternion.h>
 #include <klpt.h>
+#endif
 #include <ec.h>
 
 /** @defgroup id2iso_id2iso Ideal to isogeny conversion
@@ -21,6 +25,7 @@
  * @{
 */
 
+#if defined(ENABLE_SIGN)
 /** @brief Type for long chain of two isogenies
  * 
  * @typedef id2iso_long_two_isog
@@ -31,6 +36,7 @@ typedef struct id2iso_long_two_isog {
     unsigned short length; ///< the number of smaller two isogeny chains
     ec_isog_even_t *chain; ///< the chain of two isogeny
 } id2iso_long_two_isog_t;
+#endif
 
 /** @brief Type for compressed long chain of two isogenies
  * 
@@ -40,7 +46,7 @@ typedef struct id2iso_long_two_isog {
 */
 typedef struct id2iso_compressed_long_two_isog {
     unsigned short length; ///< the number of smaller two isogeny chains
-    ibz_t *zip_chain; ///< the chain of two isogeny, compressed
+    digit_t zip_chain[ZIP_CHAIN_LEN][NWORDS_ORDER]; ///< the chain of two isogeny, compressed
     unsigned char bit_first_step ; ///< the bit for the first step
 } id2iso_compressed_long_two_isog_t;
 
@@ -53,8 +59,10 @@ typedef struct id2iso_compressed_long_two_isog {
 /** @defgroup id2iso Constructors and Destructors
  * @{
 */
+#if defined(ENABLE_SIGN)
 void id2iso_long_two_isog_init(id2iso_long_two_isog_t *isog, const size_t length);
 void id2iso_long_two_isog_finalize(id2iso_long_two_isog_t *isog);
+#endif
 
 void id2iso_compressed_long_two_isog_init(id2iso_compressed_long_two_isog_t *zip, const size_t length);
 void id2iso_compressed_long_two_isog_finalize(id2iso_compressed_long_two_isog_t *zip);
@@ -62,6 +70,7 @@ void id2iso_compressed_long_two_isog_finalize(id2iso_compressed_long_two_isog_t 
 /** @}
 */
 
+#if defined(ENABLE_SIGN)
 /** @defgroup id2iso_others Other functions needed for id2iso
  * @{
 */
@@ -131,6 +140,7 @@ void id2iso_kernel_dlogs_to_ideal(quat_left_ideal_t *lideal, const ibz_vec_2_t *
 
 /** @}
  */
+#endif
 /** @}
  */
 

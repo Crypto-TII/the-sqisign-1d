@@ -1,3 +1,7 @@
+if (NOT ENABLE_SIGN)
+    return()
+endif()
+
 # NIST KAT generation apps
 foreach(SVARIANT ${SVARIANT_S})
     string(TOLOWER ${SVARIANT} SVARIANT_LOWER)

@@ -1,17 +1,5 @@
 #include <protocols.h>
 
-
-void signature_init(signature_t *sig)
-{
-    id2iso_compressed_long_two_isog_init(&sig->zip, SQISIGN_signing_length);
-}
-
-void signature_finalize(signature_t *sig)
-{
-    id2iso_compressed_long_two_isog_finalize(&sig->zip);
-}
-
-
 void protocols_commit(quat_left_ideal_t *ideal, ec_curve_t *E1, ec_basis_t *basis)
 {
     ibz_vec_2_t vec;
@@ -107,7 +95,7 @@ void protocols_commit(quat_left_ideal_t *ideal, ec_curve_t *E1, ec_basis_t *basi
     ibz_vec_2_finalize(&vec);
 }
 
-void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_curve_t *E1, const ec_basis_t *pushedbasis6, const ibz_vec_2_t *hash, ec_curve_t *out_E2)
+void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_curve_t *E1, const ec_basis_t *pushedbasis6, const digit_vec_2_t *hash, ec_curve_t *out_E2)
 {
     // compute deterministic and pushed 2*3*-torsion bases on E1
     ec_basis_t E1basis6, E1basis2, E1basis3;
@@ -134,10 +122,7 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
     // compute the kernel of the challenge isogeny
     ec_point_t ker;
     {
-        digit_t scalars[2][NWORDS_ORDER];
-        ibz_to_digit_array(scalars[0], &(*hash)[0]);
-        ibz_to_digit_array(scalars[1], &(*hash)[1]);
-        ec_biscalar_mul(&ker, E1, scalars[0], scalars[1], &E1basis6);
+        ec_biscalar_mul(&ker, E1, (*hash)[0], (*hash)[1], &E1basis6);
     }
     ec_point_t ker2, ker3;
     {
@@ -174,6 +159,11 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
         assert(!ibz_cmp(&ideal->norm, &DEGREE_CHALLENGE));
     }
 
+    ibz_vec_2_t hash_ibz;
+    ibz_vec_2_init(&hash_ibz);
+    ibz_copy_digit_array(&hash_ibz[0], (*hash)[0]);
+    ibz_copy_digit_array(&hash_ibz[1], (*hash)[1]);
+
     // compute the isogeny, evaluate at suitable point to find kernel of dual
     ec_curve_t Emid, E2comp, E2;
     ec_point_t pts[2];
@@ -183,8 +173,8 @@ void protocols_challenge(quat_left_ideal_t *ideal, signature_t *sig, const ec_cu
 
         // find a point independent to the kernel to push it through
         {
-            bool const bit2 = !ibz_divides(&(*hash)[0], &ibz_const_two);
-            bool const bit3 = !ibz_divides(&(*hash)[0], &ibz_const_three);
+            bool const bit2 = !ibz_divides(&hash_ibz[0], &ibz_const_two);
+            bool const bit3 = !ibz_divides(&hash_ibz[0], &ibz_const_three);
             if (bit2 == bit3) {
                 pts[0] = bit2 ? E1basis6.Q : E1basis6.P;
             }
@@ -410,14 +400,14 @@ ibz_t lhs, rhs;
 ibz_init(&lhs);
 ibz_init(&rhs);
 // check log2 is a multiple of hash modulo 2*
-ibz_mul(&lhs, &log2[0], &(*hash)[1]);
-ibz_mul(&rhs, &log2[1], &(*hash)[0]);
+ibz_mul(&lhs, &log2[0], &hash_ibz[1]);
+ibz_mul(&rhs, &log2[1], &hash_ibz[0]);
 ibz_mod(&lhs, &lhs, &TORSION_PLUS_2POWER);
 ibz_mod(&rhs, &rhs, &TORSION_PLUS_2POWER);
 assert(!ibz_cmp(&lhs, &rhs));
 // check log3 is a multiple of hash modulo 3*
-ibz_mul(&lhs, &log3[0], &(*hash)[1]);
-ibz_mul(&rhs, &log3[1], &(*hash)[0]);
+ibz_mul(&lhs, &log3[0], &hash_ibz[1]);
+ibz_mul(&rhs, &log3[1], &hash_ibz[0]);
 ibz_mod(&lhs, &lhs, &TORSION_PLUS_3POWER);
 ibz_mod(&rhs, &rhs, &TORSION_PLUS_3POWER);
 assert(!ibz_cmp(&lhs, &rhs));
@@ -433,7 +423,7 @@ ibz_finalize(&rhs);
                 bool bit = ibz_divides(&log2[0], &ibz_const_two);
                 assert(!ibz_divides(&log2[bit], &ibz_const_two));
                 ibz_invmod(&r2, &log2[bit], &TORSION_PLUS_2POWER);
-                ibz_mul(&r2, &(*hash)[bit], &r2);
+                ibz_mul(&r2, &hash_ibz[bit], &r2);
                 ibz_mod(&r2, &r2, &TORSION_PLUS_2POWER);
 //ibz_printf("r2 = %#Zx\n", &r2);
 #ifndef NDEBUG
@@ -451,7 +441,7 @@ ibz_finalize(&rhs);
                 bit = ibz_divides(&log3[0], &ibz_const_three);
                 assert(!ibz_divides(&log3[bit], &ibz_const_three));
                 ibz_invmod(&r3, &log3[bit], &TORSION_PLUS_3POWER);
-                ibz_mul(&r3, &(*hash)[bit], &r3);
+                ibz_mul(&r3, &hash_ibz[bit], &r3);
                 ibz_mod(&r3, &r3, &TORSION_PLUS_3POWER);
 //ibz_printf("r3 = %#Zx\n", &r3);
 #ifndef NDEBUG
@@ -487,6 +477,7 @@ ibz_finalize(&rhs);
         ibz_vec_2_finalize(&log3);
         ibz_vec_2_finalize(&vec2);
         ibz_vec_2_finalize(&vec3);
+        ibz_vec_2_finalize(&hash_ibz);
     }
 #ifndef NDEBUG
 {
@@ -564,14 +555,11 @@ int protocols_sign(signature_t *sig,const public_key_t *pk, const secret_key_t *
     // Challenge (computes ideal_challenge and sig->r, sig->s)
     ec_curve_t E2_for_testing;  //XXX
     {
-        ibz_vec_2_t vec;
-        ibz_vec_2_init(&vec);
+        digit_vec_2_t vec;
 
         hash_to_challenge(&vec, &E1, m, l);
 
         protocols_challenge(&ideal_challenge, sig, &E1, &E1basis, &vec, &E2_for_testing);
-
-        ibz_vec_2_finalize(&vec);
     }
     assert(ibz_get(&ideal_commit.norm)%2!=0);
         
@@ -756,4 +744,3 @@ int protocols_sign(signature_t *sig,const public_key_t *pk, const secret_key_t *
 
     return found;
 }
-

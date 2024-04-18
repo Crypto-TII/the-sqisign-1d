@@ -29,10 +29,14 @@
 #                       └─┴───────────────┴─┘                    
 
 add_subdirectory(common)
-add_subdirectory(intbig)
-add_subdirectory(quaternion)
-add_subdirectory(precomp)
-add_subdirectory(klpt)
+if(ENABLE_SIGN)
+    add_subdirectory(intbig)
+    add_subdirectory(quaternion)
+    add_subdirectory(precomp)
+    add_subdirectory(klpt)
+else()
+    add_subdirectory(precomp)
+endif()
 add_subdirectory(gf)
 add_subdirectory(ec)
 
