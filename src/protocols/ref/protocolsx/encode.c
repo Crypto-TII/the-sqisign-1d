@@ -439,14 +439,17 @@ assert(enc - start == SIGNATURE_LEN);
 
 #include <fips202.h>
 
+#if defined(PQM4)
+#define SHAKE256 shake256
+#endif
+
 void hash_to_challenge(digit_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length)
 {
-    unsigned char *buf = malloc(FP2_ENCODED_BYTES + length);
+    unsigned char buf[FP2_ENCODED_BYTES];
     {
         fp2_t j;
         ec_j_inv(&j, curve);
         fp2_encode(&j, buf);
-        memcpy(buf + FP2_ENCODED_BYTES, message, length);
     }
 
     //FIXME omits some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3).
@@ -454,7 +457,13 @@ void hash_to_challenge(digit_vec_2_t *scalars, const ec_curve_t *curve, const un
         //The code below implicitly assumes a little-endian ordering; check when working on big-endian version
 
         //FIXME should use SHAKE128 for smaller parameter sets?
-        SHAKE256((void *) (*scalars)[1], NWORDS_ORDER * sizeof(digit_t), buf, FP2_ENCODED_BYTES + length);
+        shake256incctx ctx;
+
+        shake256_inc_init(&ctx);
+        shake256_inc_absorb(&ctx, buf, FP2_ENCODED_BYTES);
+        shake256_inc_absorb(&ctx, message, length);
+        shake256_inc_finalize(&ctx);
+        shake256_inc_squeeze((void *) (*scalars)[1], NWORDS_ORDER * sizeof(digit_t), &ctx);
 
         //FIXME
         memset((*scalars)[0], 0, NWORDS_ORDER * sizeof(digit_t));
@@ -479,7 +488,5 @@ ibz_vec_2_finalize(&scalars_ibz);
 }
 #endif
 #endif
-
-    free(buf);
 }
 
