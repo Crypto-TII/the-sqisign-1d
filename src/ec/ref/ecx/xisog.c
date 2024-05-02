@@ -201,18 +201,18 @@ void xisog_s(ec_point_t* B, int i, ec_point_t const A)
 	// The faster way for multiplying is using a divide-and-conquer approach
 	
 	// selfreciprocal product tree of EJ_0 (we only require the root)
-	product_tree_selfreciprocal_LENFeq3(ptree_EJ, deg_ptree_EJ, 0, EJ_0, sJ);
+	product_tree_selfreciprocal(ptree_EJ, deg_ptree_EJ, 0, 0, (fp2_t*)EJ_0, 3, sJ, ceil_log_sJ_max);
 	assert( deg_ptree_EJ[0] == (2*sJ) );
 	if (!scaled)
 	{
 		// (unscaled) remainder tree approach
-		multieval_unscaled(leaves, ptree_EJ[0], 2*sJ + 1, rtree_hI, (const fp2_t*)rtree_A, ptree_hI, deg_ptree_hI, 0, sI);
+		multieval_unscaled(leaves, ptree_EJ, 2*sJ + 1, rtree_hI, (const fp2_t*)rtree_A, ptree_hI, deg_ptree_hI, 0, 0, sI, ceil_log_sI_max);
 	}
 	else
 	{
 		// scaled remainder tree approach
 		fp2_t G[sI_max], G_rev[sI_max];
-		poly_redc(G, ptree_EJ[0], 2*sJ + 1, ptree_hI[0], sI + 1, R0, A0);
+		poly_redc(G, ptree_EJ, 2*sJ + 1, ptree_hI, sI + 1, R0, A0);
 		for (j = 0; j < sI; j++)
 			fp2_copy(&G_rev[j], &G[sI - 1 - j]);
 
@@ -220,26 +220,25 @@ void xisog_s(ec_point_t* B, int i, ec_point_t const A)
 		for (j = 0; j < sI; j++)
 			fp2_copy(&G[j], &G_rev[sI - 1 - j]);
 
-		multieval_scaled(leaves, G, ptree_hI, deg_ptree_hI, 0, sI);
+		multieval_scaled(leaves, G, ptree_hI, deg_ptree_hI, 0, 0, sI, ceil_log_sI_max);
 	};
-	clear_tree(ptree_EJ, 0, sJ);
 	// Finally, we must multiply the leaves of the outpur of remainders
 	fp2_t r0;
 	product(&r0, (const fp2_t*)leaves, sI);
 
 	// selfreciprocal product tree of EJ_1 (we only require the root)
-	product_tree_selfreciprocal_LENFeq3(ptree_EJ, deg_ptree_EJ, 0, EJ_1, sJ);
+	product_tree_selfreciprocal(ptree_EJ, deg_ptree_EJ, 0, 0, (fp2_t*)EJ_1, 3, sJ, ceil_log_sJ_max);
 	assert( deg_ptree_EJ[0] == (2*sJ) );
 	if (!scaled)
 	{
 		// (unscaled) remainder tree approach
-		multieval_unscaled(leaves, ptree_EJ[0], 2*sJ + 1, rtree_hI, (const fp2_t*)rtree_A, ptree_hI, deg_ptree_hI, 0, sI);
+		multieval_unscaled(leaves, ptree_EJ, 2*sJ + 1, rtree_hI, (const fp2_t*)rtree_A, ptree_hI, deg_ptree_hI, 0, 0, sI, ceil_log_sI_max);
 	}
 	else
 	{
 		// scaled remainder tree approach
 		fp2_t G[sI_max], G_rev[sI_max];
-		poly_redc(G, ptree_EJ[0], 2*sJ + 1, ptree_hI[0], sI + 1, R0, A0);
+		poly_redc(G, ptree_EJ, 2*sJ + 1, ptree_hI, sI + 1, R0, A0);
 		for (j = 0; j < sI; j++)
 			fp2_copy(&G_rev[j], &G[sI - 1 - j]);
 
@@ -247,9 +246,8 @@ void xisog_s(ec_point_t* B, int i, ec_point_t const A)
 		for (j = 0; j < sI; j++)
 			fp2_copy(&G[j], &G_rev[sI - 1 - j]);
 
-		multieval_scaled(leaves, G, ptree_hI, deg_ptree_hI, 0, sI);
+		multieval_scaled(leaves, G, ptree_hI, deg_ptree_hI, 0, 0, sI, ceil_log_sI_max);
 	};
-	clear_tree(ptree_EJ, 0, sJ);
 	// Finally, we must multiply the leaves of the outpur of remainders
 	fp2_t r1;
 	product(&r1, (const fp2_t*)leaves, sI);

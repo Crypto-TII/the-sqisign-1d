@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <bench.h> 
 
 #include "isog.h"
 #include "sdacs.h"
@@ -76,33 +77,43 @@ static inline int isinfinity(ec_point_t const P)
 	return fp2_is_zero(&P.z);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	
+	int reps;
+    if (argc < 2) {
+		reps = 1;
+    }
+	else{
+		reps = atoi(argv[1]);
+	}
+
+    unsigned long long cycles_KPS[P_LEN+M_LEN]={0}, cycles_xISOG[P_LEN+M_LEN]={0}, cycles_xISOGend[P_LEN+M_LEN]={0},
+		cycles_xEVAL[P_LEN+M_LEN]={0}, cycles_start, cycles_end;
+
 	fp2_t fp2_0, fp2_1;
 	fp2_set(&fp2_0, 0);
 	fp_mont_setone(fp2_1.re);fp_set(fp2_1.im,0);
 
 	int i, j;
 
-	ec_point_t A, B, T;
-	fp2_set(&A.x, 0);
-	fp_mont_setone(A.z.re);fp_set(A.z.im,0);
+	ec_point_t A0, A, B, T;
+	fp2_set(&A0.x, 0);
+	fp_mont_setone(A0.z.re);fp_set(A0.z.im,0);
 	
 	// fp2_add(&A.x, &A.z, &A.x);	// 1
 	// fp2_add(&A.x, &A.x, &A.x);	// 2
 	// fp2_add(&A.x, &A.z, &A.x);	// 3
 	// fp2_add(&A.x, &A.x, &A.x);	// 6
 
-	fp2_add(&A.z, &A.z, &A.z);	// 2C
-	fp2_add(&A.x, &A.x, &A.z);	// A' + 2C
-	fp2_add(&A.z, &A.z, &A.z);	// 4C
+	fp2_add(&A0.z, &A0.z, &A0.z);	// 2C
+	fp2_add(&A0.x, &A0.x, &A0.z);	// A' + 2C
+	fp2_add(&A0.z, &A0.z, &A0.z);	// 4C
 
 	// Just to ensure the projective curve coeffientes are different from zero
-	assert( !fp2_is_zero(&A.x) & !fp2_is_zero(&A.x) );
+	assert( !fp2_is_zero(&A0.x) & !fp2_is_zero(&A0.x) );
 
 	fp2_t a;
-	coeff(&a, A);
+	coeff(&a, A0);
 
 	ec_point_t PA, QA, PQA, PB, QB, PQB, RA, RB;
 
@@ -134,9 +145,9 @@ int main()
 	{
 		for (i = 1; i < TORSION_ODD_POWERS[j]; i++)
 		{
-			xMULv2(&PA, &PA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
-			xMULv2(&QA, &QA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
-			xMULv2(&PQA, &PQA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+			xMULv2(&PA, &PA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
+			xMULv2(&QA, &QA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
+			xMULv2(&PQA, &PQA, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
 
 			assert( isrational(PA, a) );
 			assert( isrational(QA, a) );
@@ -150,64 +161,58 @@ int main()
 
 	// --------------------------------------------------------------
 	fp_t m;
-	random_scalar(m, 0);
-	ladder3pt(&RA, m, &PA, &QA, &PQA, &A);
-	for (i = 0; i < P_LEN; i++)
-	{
-		printf("// Processing the %d-th prime:\t", i + 1);
-		printf("%2d%%", 100 * i / (int)P_LEN);
+	for(int iteration = 0; iteration < reps; iteration++){
+		printf("// Processing (p+1)-torsion primes:\t%d%%", iteration*100/reps);
 		fflush(stdout);
 		printf("\r\x1b[K");
 
-		copy_point(&T, &RA);
-		for (j = (i+1); j < P_LEN; j++)
-			xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+		copy_point(&A, &A0);
+		copy_point(&PB, &QB);
+		random_scalar(m, 0);
+		ladder3pt(&RA, m, &PA, &QA, &PQA, &A);
+		for (i = 0; i < P_LEN; i++)
+		{
+			copy_point(&T, &RA);
+			for (j = (i+1); j < P_LEN; j++)
+				xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
 
-		assert( !isinfinity(T) );
+			assert( !isinfinity(T) );
 
-		kps(i, T, A);
-		if (TORSION_ODD_PRIMES[i] > gap)
-			printf("[\033[0;31m%7" PRId "\033[0m] (#I: %3d, #J: %3d, #K: %3d) \n", TORSION_ODD_PRIMES[i], sI, sJ, sK);
-		else
-			printf("[\033[0;31m%7" PRId "\033[0m] --------------------------- \n", TORSION_ODD_PRIMES[i]);
+    		cycles_start = cpucycles(); 
+			kps(i, T, A);
+    		cycles_end = cpucycles();
+			cycles_KPS[i] += cycles_end - cycles_start;
 
-		xisog(&B, i, A);
+    		cycles_start = cpucycles();
+			xisog(&B, i, A);
+    		cycles_end = cpucycles();
+			cycles_xISOG[i] += cycles_end - cycles_start;
 
-		xeval(&PB, i, PB, A);
-		coeff(&a, B);
-		assert( !isinfinity(PB) );
-		assert( !isrational(PB, a) );
+    		cycles_start = cpucycles(); 
+			xeval(&PB, i, PB, A);
+    		cycles_end = cpucycles(); 
+			cycles_xEVAL[i] += cycles_end - cycles_start;
 
-		xeval(&RA, i, RA, A);
-		assert( (!isinfinity(RA) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
-		assert( (isrational(RA, a) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
-		
-		copy_point(&A, &B);
-		// Verifying the order of the image point of  PA has been reduced 
-		copy_point(&T, &RA);
-		for (j = (i+1); j < P_LEN; j++)
-			xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+			coeff(&a, B);
+			assert( !isinfinity(PB) );
+			assert( !isrational(PB, a) );
 
-		assert( isinfinity(T) );
-		kps_clear(i);
-	};
+			xeval(&RA, i, RA, A);
+			assert( (!isinfinity(RA) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
+			assert( (isrational(RA, a) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
 
-	fp2_set(&A.x, 0);
-	fp_mont_setone(A.z.re);fp_set(A.z.im,0);
-	
-	// fp2_add(&A.x, &A.z, &A.x);	// 1
-	// fp2_add(&A.x, &A.x, &A.x);	// 2
-	// fp2_add(&A.x, &A.z, &A.x);	// 3
-	// fp2_add(&A.x, &A.x, &A.x);	// 6
+			copy_point(&A, &B);
+			// Verifying the order of the image point of  PA has been reduced 
+			copy_point(&T, &RA);
+			for (j = (i+1); j < P_LEN; j++)
+				xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
 
-	fp2_add(&A.z, &A.z, &A.z);	// 2C
-	fp2_add(&A.x, &A.x, &A.z);	// A' + 2C
-	fp2_add(&A.z, &A.z, &A.z);	// 4C
+			assert( isinfinity(T) );
+		};
+	}
+	printf("// Processing (p+1)-torsion primes:\t%d%%\n", 100);
 
-	// Just to ensure the projective curve coeffientes are different from zero
-	assert( !fp2_is_zero(&A.x) & !fp2_is_zero(&A.x) );
-
-	coeff(&a, A);
+	coeff(&a, A0);
 	// Writing the public projective x-coordinate points into Montogmery domain
 	fp2_tomont(&(PA.x), &(xPA));
 	fp_mont_setone(PA.z.re);fp_set(PA.z.im,0);
@@ -237,9 +242,9 @@ int main()
 	{
 		for (i = 1; i < TORSION_ODD_POWERS[j]; i++)
 		{
-			xMULv2(&PB, &PB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
-			xMULv2(&QB, &QB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
-			xMULv2(&PQB, &PQB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+			xMULv2(&PB, &PB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
+			xMULv2(&QB, &QB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
+			xMULv2(&PQB, &PQB, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A0);
 
 			assert( !isrational(PB, a) );
 			assert( !isrational(QB, a) );
@@ -251,47 +256,63 @@ int main()
 	assert( !isinfinity(QB) );
 	assert( !isinfinity(PQB) );
 
-	random_scalar(m, 1);
-	ladder3pt(&RB, m, &PB, &QB, &PQB, &A);
-	for (i = P_LEN; i < (P_LEN+M_LEN); i++)
-	{
-		printf("// Processing the %d-th prime:\t", i + 1);
-		printf("%2d%%", 100 * i / (int)(P_LEN+M_LEN));
+	for(int iteration = 0; iteration < reps; iteration++){
+		printf("// Processing (p+1)-torsion primes:\t%d%%", iteration*100/reps);
 		fflush(stdout);
 		printf("\r\x1b[K");
 
-		copy_point(&T, &RB);
-		for (j = (i+1); j < (P_LEN+M_LEN); j++)
-			xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+		copy_point(&A, &A0);
+		copy_point(&PA, &QA);
+		random_scalar(m, 1);
+		ladder3pt(&RB, m, &PB, &QB, &PQB, &A);
+		for (i = P_LEN; i < (P_LEN+M_LEN); i++)
+		{
+			copy_point(&T, &RB);
+			for (j = (i+1); j < (P_LEN+M_LEN); j++)
+				xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
 
-		assert( !isinfinity(T) );
-
-		kps(i, T, A);
-		if (TORSION_ODD_PRIMES[i] > gap)
-			printf("[\033[0;31m%7" PRId "\033[0m] (#I: %3d, #J: %3d, #K: %3d) \n", TORSION_ODD_PRIMES[i], sI, sJ, sK);
-		else
-			printf("[\033[0;31m%7" PRId "\033[0m] --------------------------- \n", TORSION_ODD_PRIMES[i]);
-
-		xisog(&B, i, A);
-
-		xeval(&PA, i, PA, A);
-		coeff(&a, B);
-		assert( !isinfinity(PA) );
-		assert( isrational(PA, a) );
-
-		xeval(&RB, i, RB, A);
-		assert( (!isinfinity(RB) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
-		assert( (!isrational(RB, a) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
+			assert( !isinfinity(T) );
 	
-		copy_point(&A, &B);
-		// Verifying the order of the image point of  PB has been reduced 
-		copy_point(&T, &RB);
-		for (j = (i+1); j < (P_LEN+M_LEN); j++)
-			xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+    		cycles_start = cpucycles(); 
+			kps(i, T, A);
+    		cycles_end = cpucycles();
+			cycles_KPS[i] += cycles_end - cycles_start;
 
-		assert( isinfinity(T) );
-		kps_clear(i);
-	};
+    		cycles_start = cpucycles();
+			xisog(&B, i, A);
+    		cycles_end = cpucycles();
+			cycles_xISOG[i] += cycles_end - cycles_start;
+
+    		cycles_start = cpucycles();
+			xeval(&PA, i, PA, A);
+    		cycles_end = cpucycles(); 
+			cycles_xEVAL[i] += cycles_end - cycles_start;
+
+			coeff(&a, B);
+			assert( !isinfinity(PA) );
+			assert( isrational(PA, a) );
+
+			xeval(&RB, i, RB, A);
+			assert( (!isinfinity(RB) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
+			assert( (!isrational(RB, a) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
+			
+			copy_point(&A, &B);
+			// Verifying the order of the image point of  PB has been reduced 
+			copy_point(&T, &RB);
+			for (j = (i+1); j < (P_LEN+M_LEN); j++)
+				xMULv2(&T, &T, &(TORSION_ODD_PRIMES[j]), p_plus_minus_bitlength[j], &A);
+
+			assert( isinfinity(T) );
+		}
+	}
+	printf("// Processing (p+1)-torsion primes:\t%d%%\n", 100);
+
+	for(i = 0; i < P_LEN+M_LEN; i++){
+		if (TORSION_ODD_PRIMES[i] > gap)
+			printf("[\033[0;31m%7" PRId "\033[0m] (#I: %ld, #J: %ld, #K: %ld) \t KPS: %7lld cycles \t xISOG: %7lld cycles \t xEVAL: %7lld cycles\n", TORSION_ODD_PRIMES[i], sizeI[i], sizeJ[i], sizeK[i], cycles_KPS[i]/reps, cycles_xISOG[i]/reps, cycles_xEVAL[i]/reps);
+		else
+			printf("[\033[0;31m%7" PRId "\033[0m] --------------------------- \t KPS: %7lld cycles \t xISOG: %7lld cycles \t xEVAL: %7lld cycles\n", TORSION_ODD_PRIMES[i], cycles_KPS[i]/reps, cycles_xISOG[i]/reps, cycles_xEVAL[i]/reps);
+	}
 
 	printf("-- All tests passed!\n");
 	return 0;

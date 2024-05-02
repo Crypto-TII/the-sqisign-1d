@@ -147,7 +147,6 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
             for(j = 0; j < length; j++)
                 xeval(&points[j], i, points[j], A24);
             copy_point(&A24, &B24);
-            kps_clear(i);
         }
     }
 
@@ -169,7 +168,6 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
             for(j = 0; j < length; j++)
                 xeval(&points[j], i, points[j], A24);
             copy_point(&A24, &B24);
-            kps_clear(i);
         }
     }
 

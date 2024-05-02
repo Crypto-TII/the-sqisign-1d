@@ -17,14 +17,14 @@ extern fp2_t XZJ4[sJ_max],		// -4* (Xj * Zj) for each j in J, and x([j]P) = (Xj 
     rtree_A[(1 << (ceil_log_sI_max+2)) - 1],		// constant multiple of the reciprocal tree computation
     A0;			// constant multiple of the reciprocal R0
 
-extern poly ptree_hI[(1 << (ceil_log_sI_max+2)) - 1],		// product tree of h_I(X)
-     rtree_hI[(1 << (ceil_log_sI_max+2)) - 1],		// reciprocal tree of h_I(X)
-     ptree_EJ[(1 << (ceil_log_sJ_max+2)) - 1];		// product tree of E_J(X)
+extern fp2_t ptree_hI[],		// product tree of h_I(X)
+     rtree_hI[],		// reciprocal tree of h_I(X)
+     ptree_EJ[];		// product tree of E_J(X)
      
 extern fp2_t R0[2*sJ_max + 1];		// Reciprocal of h_I(X) required in the scaled remainder tree approach
 
-extern int deg_ptree_hI[(1 << (ceil_log_sI_max+2)) - 1],	// degree of each noed in the product tree of h_I(X)
-    deg_ptree_EJ[(1 << (ceil_log_sJ_max+2)) - 1];	// degree of each node in the product tree of E_J(X)
+extern int deg_ptree_hI[(1 << (ceil_log_sI_max+1)) - 1],	// degree of each noed in the product tree of h_I(X)
+    deg_ptree_EJ[(1 << (ceil_log_sJ_max+1)) - 1];	// degree of each node in the product tree of E_J(X)
 
 extern fp2_t leaves[sI_max];		// leaves of the remainder tree, which are required in the Resultant computation
 

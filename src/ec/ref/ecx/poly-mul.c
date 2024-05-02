@@ -841,165 +841,71 @@ void poly_mul_selfreciprocal(poly h, const poly g, const int leng, const poly f,
 }
 
 
-void product_tree(poly H[], int DEG[], const int root, const poly F[], const int LENF, const int n)
+#define POLY_TREE_INDEX(i,j,LENF,h) (i)*(1 << (h))*((LENF)-1) + (1 << (i)) + (j)*((LENF)-1)*(1 << ((h)-(i))) + (j) - 1
+#define SCALAR_TREE_INDEX(i,j) (1 << (i)) - 1 + (j)
+void product_tree(fp2_t *H, int DEG[], const int i, const int j, const fp2_t F[], const int LENF, const int n, const int h)
 {
-	// Given an array F containing n polynomials of the same length LENF,
-	// Writes the product tree of the polynomials to the tree rooted at H[root].
+	// Given the coefficients for n polynomials of the same degree LENF-1 listed in a 
+	// linear array F, writes the product tree of the polynomials to the tree H.
 	//
-	// The tree is represented by an array where, for node H[i], the left child is H[2*i+1] and
-	// the right child is H[2*i+2]. The root of the complete tree is intended to be H[0].
+	// For some h >= ceil(log2(n)), the tree is represented by an array of field elements,
+	// where the coefficients of the j-th node of the i-th level (i=0 being the root),
+	// are listed starting from address j*2^(h-i)*(LENF-1) + j + 2^i + i*(LENF-1)*2^h - 1.
 	//
-	// Also writes to DEG the tree containing the degree of the corresponding polynomials.
+	// Also writes to DEG the corresponding degree tree, with the
+	// degree of the j-th node from the i-th level written to DEG[2^i-1+j]
 	//
-	// REQUIRES H and DEG to have enough space for 2^(k+2)-1 terms where k = ceil(log2(n))
+	// This is a recursive function; the outer call should always be made with i=j=0.
+	//
+	// REQUIRES H to have enough space for 2^h*(LENF + 1 + (LENF-1)*h) elements.
+	// REQUIRES DEG to have enough space for 2^(h+1)-1 elements.
 
-	int i;
+	int l;
+	const int root = POLY_TREE_INDEX(i,j,LENF,h);
+
+	// Base case (leaf nodes)
 	if(n == 1)
 	{
-		H[root] = malloc(sizeof(fp2_t)*LENF);
-		for(i = 0; i < LENF; i++)
-			fp2_copy(&H[root][i], &F[0][i]);
+		for(l = 0; l < LENF; l++)
+			fp2_copy(&H[root+l], &F[l]);
 
-		DEG[root] = LENF-1;
+		DEG[SCALAR_TREE_INDEX(i,j)] = LENF-1;
 		return;
 	}
   
 	const int n1 = n >> 1;
 	const int n0 = n - n1;
-	const int left = 2*root+1;
-	const int right = left + 1;
-	product_tree(H, DEG, left, F, LENF, n0);
-	product_tree(H, DEG, right, &(F[n0]), LENF, n1);
-	DEG[root] = DEG[left] + DEG[right];
-	H[root] = malloc(sizeof(fp2_t)*(DEG[left]+DEG[right]+1));
-	poly_mul(H[root], H[left], DEG[left]+1, H[right], DEG[right]+1);
+	product_tree(H, DEG, i+1, 2*j, F, LENF, n0, h);
+	product_tree(H, DEG, i+1, 2*j+1, &(F[LENF*n0]), LENF, n1, h);
+	DEG[SCALAR_TREE_INDEX(i,j)] = DEG[SCALAR_TREE_INDEX(i+1,2*j)] + DEG[SCALAR_TREE_INDEX(i+1,2*j+1)];
+	poly_mul(&H[root], &H[POLY_TREE_INDEX(i+1,2*j,LENF,h)], DEG[SCALAR_TREE_INDEX(i+1,2*j)]+1, &H[POLY_TREE_INDEX(i+1,2*j+1,LENF,h)], DEG[SCALAR_TREE_INDEX(i+1,2*j+1)]+1);
 	return;
 }
 
 
-
-void product_tree_LENFeq2(poly H[], int DEG[], const int root, const fp2_t F[][2], const int n)
-{
-	// Same as product tree but allows F to be given as a double array with LENF fixed to 2
-	int i;
-	if(n == 1)
-	{
-		H[root] = malloc(sizeof(fp2_t)*2);
-		for(i = 0; i < 2; i++)
-			fp2_copy(&H[root][i], &F[0][i]);
-
-		DEG[root] = 1;
-		return;
-	}
-  
-	const int n1 = n >> 1;
-	const int n0 = n - n1;
-	const int left = 2*root+1;
-	const int right = left + 1;
-	product_tree_LENFeq2(H, DEG, left, F, n0);
-	product_tree_LENFeq2(H, DEG, right, &(F[n0]), n1);
-	DEG[root] = DEG[left] + DEG[right];
-	H[root] = malloc(sizeof(fp2_t)*(DEG[left]+DEG[right]+1));
-	poly_mul(H[root], H[left], DEG[left]+1, H[right], DEG[right]+1);
-	return;
-}
-
-
-
-void product_tree_LENFeq3(poly H[], int DEG[], const int root, const fp2_t F[][3], const int n)
-{
-	// Same as product tree but allows F to be given as a double array with LENF fixed to 3
-	int i;
-	if(n == 1)
-	{
-		H[root] = malloc(sizeof(fp2_t)*3);
-		for(i = 0; i < 3; i++)
-			fp2_copy(&H[root][i], &F[0][i]);
-
-		DEG[root] = 3-1;
-		return;
-	}
-  
-	const int n1 = n >> 1;
-	const int n0 = n - n1;
-	const int left = 2*root+1;
-	const int right = left + 1;
-	product_tree_LENFeq3(H, DEG, left, F, n0);
-	product_tree_LENFeq3(H, DEG, right, &(F[n0]), n1);
-	DEG[root] = DEG[left] + DEG[right];
-	H[root] = malloc(sizeof(fp2_t)*(DEG[left]+DEG[right]+1));
-	poly_mul(H[root], H[left], DEG[left]+1, H[right], DEG[right]+1);
-	return;
-}
-
-
-void product_tree_selfreciprocal(poly H[], int DEG[], const int root, const poly F[], const int LENF, const int n)
+void product_tree_selfreciprocal(fp2_t H[], int DEG[], const int i, const int j, const fp2_t F[], const int LENF, const int n, const int h)
 {
 	// Same as product_tree but for selfreciprocal inputs
 
-	int i;
+	int l;
+	const int root = POLY_TREE_INDEX(i,j,LENF,h);
+
+	// Base case (leaf nodes)
 	if(n == 1)
 	{
-		H[root] = malloc(sizeof(fp2_t)*LENF);
-		for(i = 0; i < LENF; i++)
-			fp2_copy(&H[root][i], &F[0][i]);
+		for(l = 0; l < LENF; l++)
+			fp2_copy(&H[root+l], &F[l]);
 
-		DEG[root] = LENF-1;
+		DEG[SCALAR_TREE_INDEX(i,j)] = LENF-1;
 		return;
 	}
   
 	const int n1 = n >> 1;
 	const int n0 = n - n1;
-	const int left = 2*root+1;
-	const int right = left + 1;
-	product_tree_selfreciprocal(H, DEG, left, F, LENF, n0);
-	product_tree_selfreciprocal(H, DEG, right, &(F[n0]), LENF, n1);
-	DEG[root] = DEG[left] + DEG[right];
-	H[root] = malloc(sizeof(fp2_t)*(DEG[left]+DEG[right]+1));
-	poly_mul_selfreciprocal(H[root], H[left], DEG[left]+1, H[right], DEG[right]+1);
-	return;
-}
-
-void product_tree_selfreciprocal_LENFeq3(poly H[], int DEG[], const int root, const fp2_t F[][3], const int n)
-{
-	// Same as product_tree_selfreciprocal but allows F to be given as a double array with LENF fixed to 3
-
-	int i;
-	if(n == 1)
-	{
-		H[root] = malloc(sizeof(fp2_t)*3);
-		for(i = 0; i < 3; i++)
-			fp2_copy(&H[root][i], &F[0][i]);
-
-		DEG[root] = 3-1;
-		return;
-	}
-  
-	const int n1 = n >> 1;
-	const int n0 = n - n1;
-	const int left = 2*root+1;
-	const int right = left + 1;
-	product_tree_selfreciprocal_LENFeq3(H, DEG, left, F, n0);
-	product_tree_selfreciprocal_LENFeq3(H, DEG, right, &(F[n0]), n1);
-	DEG[root] = DEG[left] + DEG[right];
-	H[root] = malloc(sizeof(fp2_t)*(DEG[left]+DEG[right]+1));
-	poly_mul_selfreciprocal(H[root], H[left], DEG[left]+1, H[right], DEG[right]+1);
-	return;
-}
-
-void clear_tree(poly H[], const int root, const int n)
-{
-	// Frees all dynamic memory in a polynomial tree rooted at H[root] and generated by n leafs
-
-	if(n == 1)
-	{
-		free(H[root]);
-		return;
-	}
-
-	clear_tree(H, 2*root+1, n-(n>>1));
-	clear_tree(H, 2*root+2, n>>1);
-	free(H[root]);
+	product_tree_selfreciprocal(H, DEG, i+1, 2*j, F, LENF, n0, h);
+	product_tree_selfreciprocal(H, DEG, i+1, 2*j+1, &(F[LENF*n0]), LENF, n1, h);
+	DEG[SCALAR_TREE_INDEX(i,j)] = DEG[SCALAR_TREE_INDEX(i+1,2*j)] + DEG[SCALAR_TREE_INDEX(i+1,2*j+1)];
+	poly_mul_selfreciprocal(&H[root], &H[POLY_TREE_INDEX(i+1,2*j,LENF,h)], DEG[SCALAR_TREE_INDEX(i+1,2*j)]+1, &H[POLY_TREE_INDEX(i+1,2*j+1,LENF,h)], DEG[SCALAR_TREE_INDEX(i+1,2*j+1)]+1);
 	return;
 }
 
@@ -1012,7 +918,7 @@ void product(fp2_t *c, const fp2_t F[], const int n)
 
 	fp_mont_setone((*c).re);fp_set((*c).im,0);
 
-	// Empty list must returns 1
+	// Empty list must return 1
 	if (n == 0)
 		return;
 
