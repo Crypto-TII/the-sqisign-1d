@@ -26,7 +26,7 @@ extern const digit_t sizeK[];
 #define sK_max 396
 
 #define ceil_log_sI_max 9
-#define ceil_log_sJ_max 9
+#define ceil_log_sJ_max 8
 
 extern const digit_t TWOpFm1[NWORDS_ORDER];
 extern const digit_t THREEpE[NWORDS_ORDER];
@@ -42,5 +42,9 @@ extern const digit_t p_cofactor_for_6fg[NWORDS_ORDER];
 // differential addition chains
 extern const digit_t DACS[34];
 extern const int DAC_LEN[34];
+
+//quadratic residues
+#define NONRES_LEN 128
+extern const digit_t NONRES[NONRES_LEN];
 
 #endif

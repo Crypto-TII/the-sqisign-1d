@@ -93,20 +93,48 @@ def print_dac(dac, name, len, file):
 bL = '{'+', '.join([str(ceil(log(l,2))) for l in L])+'}'
 strategy4 = strategy(f//2-1, 2*p2, q4)
 strategy4 = '{'+', '.join([str(s) for s in strategy4])+'}'
-sizeI = []
-sizeJ = []
-sizeK = []
-for l in L:
-    I,J,K = ijk(l)
-    sizeI.append(I)
-    sizeJ.append(J)
-    sizeK.append(K)
+
+## The following primes have IJK that have been optimized externally by an exhaustive dac_search
+if p == 0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff: # Nist lvl1
+    sizeI = [0, 2, 4, 6, 6, 7, 12, 14, 28, 1, 2, 3, 3, 5, 6, 6, 6, 6, 9, 8, 10, 12, 12, 12, 16, 16, 18, 22]
+    sizeJ = [0, 2, 3, 4, 4, 7, 10, 13, 17, 1, 1, 1, 3, 4, 4, 4, 5, 5, 6, 7, 9, 8, 10, 12, 16, 16, 16, 22]
+    sizeK = [1, 3, 5, 2, 6, 0, 5, 7, 4, 1, 1, 0, 0, 4, 0, 5, 5, 8, 3, 7, 11, 2, 9, 15, 4, 12, 20, 18]
+elif p == 0x3df6eeeab0871a2c6ae604a45d10ad665bc2e0a90aeb751c722f669356ea4684c6174c1ffffffffffffffffffffffff: # Nist lvl3
+    sizeI = [0, 1, 2, 3, 6, 14, 14, 1, 3, 5, 5, 7, 8, 8, 10, 11, 14, 19, 26, 30, 35, 40, 44, 44, 52, 88, 114, 114]
+    sizeJ = [0, 1, 1, 3, 6, 9, 13, 1, 1, 4, 5, 6, 7, 7, 6, 10, 10, 16, 23, 28, 32, 32, 32, 33, 45, 76, 87, 104]
+    sizeK = [1, 1, 1, 5, 6, 2, 16, 0, 0, 4, 6, 2, 4, 7, 0, 1, 4, 6, 0, 5, 18, 13, 30, 2, 18, 12, 3, 8]
+elif p == 0x255946a8869bc68c15b0036936e79202bdbe6326507d01fe3ac5904a0dea65faf0a29a781974ce994c68ada6e1ffffffffffffffffffffffffffffffffffff: # Nist lvl5
+    sizeI = [0, 3, 3, 4, 6, 11, 14, 1, 1, 2, 3, 4, 4, 6, 6, 13, 14, 14, 18, 26, 32, 38, 48, 54, 60, 62, 62, 64, 72, 92, 118, 126, 130, 310]
+    sizeJ = [0, 1, 3, 4, 4, 10, 14, 1, 1, 2, 3, 3, 4, 5, 6, 12, 13, 13, 14, 24, 32, 33, 37, 49, 56, 60, 62, 62, 64, 63, 102, 125, 126, 256]
+    sizeK = [1, 0, 2, 1, 3, 10, 21, 0, 1, 0, 0, 2, 4, 3, 3, 9, 2, 5, 0, 21, 28, 21, 11, 6, 75, 21, 82, 59, 75, 21, 21, 123, 0, 396]
+
+## For other primes we perform a new good-enough search:
+else:
+    sizeI = []
+    sizeJ = []
+    sizeK = []
+    for l in L:
+        I,J,K = ijk(l)
+        sizeI.append(I)
+        sizeJ.append(J)
+        sizeK.append(K)
+
 sImax = max(sizeI)
 sJmax = max(sizeJ)
 sKmax = max(sizeK)
 sizeI = '{'+', '.join([str(s) for s in sizeI])+'}'
 sizeJ = '{'+', '.join([str(s) for s in sizeJ])+'}'
 sizeK = '{'+', '.join([str(s) for s in sizeK])+'}'
+
+# Small quadratic non-residues
+Fp2.<i> = GF((p,2), modulus=[1,0,1])
+NONRES_LEN = 128
+NONRES = []
+k = 0
+while len(NONRES) < NONRES_LEN:
+    k+=1
+    if not (1+k*i).is_square():
+        NONRES.append(k)
 
 ################################################################
 
@@ -202,6 +230,14 @@ with open('include/ec_params.h', 'w') as hfile:
         for dac in DACS:
             print(f'{dac[1]}, ', end= '', file=cfile)
         print('};', file=cfile)
+
+        print('',file=hfile)
+        print('//quadratic residues',file=hfile)
+        print(f'#define NONRES_LEN {NONRES_LEN}',file=hfile)
+        print('extern const digit_t NONRES[NONRES_LEN];',file=hfile)
+        print('',file=cfile)
+        print('//quadratic residues',file=cfile)
+        print('const digit_t NONRES[NONRES_LEN] = { '+', '.join([str(x) for x in NONRES])+' };',file=cfile)
 
         print('',file=hfile)
         print('#endif', file=hfile)

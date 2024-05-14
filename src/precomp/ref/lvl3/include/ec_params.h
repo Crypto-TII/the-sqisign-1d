@@ -43,4 +43,8 @@ extern const digit_t p_cofactor_for_6fg[NWORDS_ORDER];
 extern const digit_t DACS[28];
 extern const int DAC_LEN[28];
 
+//quadratic residues
+#define NONRES_LEN 128
+extern const digit_t NONRES[NONRES_LEN];
+
 #endif
