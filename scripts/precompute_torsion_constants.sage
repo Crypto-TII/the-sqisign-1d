@@ -33,13 +33,13 @@ objs_verif = ObjectFormatter([
         Object('digit_t', 'TORSION_PLUS_EVEN_POWER', int(f)),
         Object('digit_t[]', 'TORSION_ODD_PRIMES', Lpls + Lmin),
         Object('digit_t[]', 'TORSION_ODD_POWERS', Epls + Emin),
+        Object('size_t[]', 'TORSION_PLUS_ODD_POWERS', Epls),        # TODO deduplicate?
         Object('digit_t', 'TORSION_PLUS_2POWER_DIGITS[NWORDS_ORDER]', FpEl(tors2part, p)),
         Object('digit_t', 'TORSION_PLUS_3POWER_DIGITS[NWORDS_ORDER]', FpEl(tors3part, p)),
     ])
 
 objs = ObjectFormatter([
         Object('digit_t[]', 'TORSION_PLUS_ODD_PRIMES', Lpls),      # TODO deduplicate?
-        Object('size_t[]', 'TORSION_PLUS_ODD_POWERS', Epls),        # TODO deduplicate?
         Object('digit_t[]', 'TORSION_MINUS_ODD_PRIMES', Lmin),     # TODO deduplicate?
         Object('size_t[]', 'TORSION_MINUS_ODD_POWERS', Emin),       # TODO deduplicate?
         Object('size_t[]', 'DEGREE_COMMITMENT_POWERS', [Dcom.valuation(l) for l in Lpls+Lmin]), #FIXME should be ec_degree_odd_t

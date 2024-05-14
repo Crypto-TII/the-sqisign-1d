@@ -6,12 +6,12 @@
 extern const digit_t TORSION_PLUS_EVEN_POWER;
 extern const digit_t TORSION_ODD_PRIMES[28];
 extern const digit_t TORSION_ODD_POWERS[28];
+extern const size_t TORSION_PLUS_ODD_POWERS[9];
 extern const digit_t TORSION_PLUS_2POWER_DIGITS[NWORDS_ORDER];
 extern const digit_t TORSION_PLUS_3POWER_DIGITS[NWORDS_ORDER];
 #if defined(ENABLE_SIGN)
 #include <intbig.h>
 extern const digit_t TORSION_PLUS_ODD_PRIMES[9];
-extern const size_t TORSION_PLUS_ODD_POWERS[9];
 extern const digit_t TORSION_MINUS_ODD_PRIMES[19];
 extern const size_t TORSION_MINUS_ODD_POWERS[19];
 extern const size_t DEGREE_COMMITMENT_POWERS[28];
