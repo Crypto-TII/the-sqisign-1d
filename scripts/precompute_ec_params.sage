@@ -157,7 +157,6 @@ objs = ObjectFormatter(
 
 ################################################################
 
-
 with open('include/ec_params.h', 'w') as hfile:
     with open('ec_params.c','w') as cfile:
 
@@ -214,13 +213,13 @@ with open('include/ec_params.h', 'w') as hfile:
         print(f'#define P_COFACTOR_FOR_2F_BITLENGTH {ceil(log((p+1)//(2**f),2))}', file=hfile)
         print(f'#define P_COFACTOR_FOR_3G_BITLENGTH {ceil(log((p+1)//(3**g),2))}', file=hfile)
         print(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {ceil(log((p+1)//(2**f*3**g),2))}', file=hfile)
-
         print('',file=hfile)
+
         print('// differential addition chains', file= hfile)
         print(f'extern const digit_t DACS[{len(DACS)}];', file=hfile)
         print(f'extern const int DAC_LEN[{len(DACS)}];', file=hfile)
+        print('',file=hfile)
 
-        print('',file=cfile)
         print('// differential addition chains', file= cfile)
         print(f'const digit_t DACS[{len(DACS)}] = '+'{', end= '', file=cfile)
         for dac in DACS:
@@ -230,12 +229,11 @@ with open('include/ec_params.h', 'w') as hfile:
         for dac in DACS:
             print(f'{dac[1]}, ', end= '', file=cfile)
         print('};', file=cfile)
+        print('',file=cfile)
 
-        print('',file=hfile)
         print('//quadratic residues',file=hfile)
         print(f'#define NONRES_LEN {NONRES_LEN}',file=hfile)
         print('extern const digit_t NONRES[NONRES_LEN];',file=hfile)
-        print('',file=cfile)
         print('//quadratic residues',file=cfile)
         print('const digit_t NONRES[NONRES_LEN] = { '+', '.join([str(x) for x in NONRES])+' };',file=cfile)
 
