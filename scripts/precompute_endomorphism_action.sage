@@ -147,7 +147,19 @@ assert sum(Mod(c,Dcom)*g for c,g in zip(distorter,(1,mati,matj,matk))).columns()
 
 ################################################################
 
-from cformat import Ibz, Basis, Object, ObjectFormatter
+if (p == 0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff):
+    # lvl1
+    radix_map = { 32: 29, 64: 52 }
+elif (p == 0x3df6eeeab0871a2c6ae604a45d10ad665bc2e0a90aeb751c722f669356ea4684c6174c1ffffffffffffffffffffffff):
+    # lvl3
+    radix_map = { 32: 28, 64: 55 }
+elif (p == 0x255946a8869bc68c15b0036936e79202bdbe6326507d01fe3ac5904a0dea65faf0a29a781974ce994c68ada6e1ffffffffffffffffffffffffffffffffffff):
+    # lvl5
+    radix_map = { 32: 28, 64: 56 }
+
+################################################################
+
+from cformat import Ibz, Basis, Object, ObjectFormatter, ObjectFormatterMArith
 
 # def field2limbs(el):
 #     l = 1 + floor(log(p, 2**64))
@@ -173,7 +185,7 @@ bases = {
 
 assert P.order() == Q.order()
 
-objs = ObjectFormatter([
+objs_marith = ObjectFormatterMArith([
         Object('ec_basis_t', f'BASIS_{k}',
             Basis(p, Fp2, ZZ(P.order()/v)*P, ZZ(Q.order()/v)*Q)
         )
@@ -181,6 +193,9 @@ objs = ObjectFormatter([
     ] + [
         Object('ec_curve_t', 'CURVE_E0', [[[int(0)]], [[int(1)]]]),
         Object('ec_point_t', 'CURVE_E0_A24', [[[int(0)]], [[int(1)]]]),
+    ])
+
+objs = ObjectFormatter([
         Object('ibz_mat_2x2_t', 'ACTION_I', [[Ibz(v) for v in vs] for vs in mati]),
         Object('ibz_mat_2x2_t', 'ACTION_J', [[Ibz(v) for v in vs] for vs in matj]),
         Object('ibz_mat_2x2_t', 'ACTION_K', [[Ibz(v) for v in vs] for vs in matk]),
@@ -200,6 +215,8 @@ with open('include/endomorphism_action.h','w') as hfile:
         print(f'#include <stdint.h>', file=cfile)
         print(f'#include <endomorphism_action.h>', file=cfile)
 
+        objs_marith.header(file=hfile)
         objs.header(file=hfile)
+        objs_marith.implementation(file=cfile, radix_map=radix_map)
         objs.implementation(file=cfile)
 

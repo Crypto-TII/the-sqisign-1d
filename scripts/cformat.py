@@ -132,6 +132,27 @@ class ObjectFormatter:
         print('#endif', file=file)
 
 
+class ObjectFormatterMArith(ObjectFormatter):
+    def __init__(self, objs):
+        ObjectFormatter.__init__(self, objs)
+
+    def implementation(self, file=None, radix_map=None):
+        print('#if 0', file=file)
+        for sz in (16, 32, 64):
+            print(f'#elif 8*DIGIT_LEN == {sz}', file=file)
+            if sz != 16:
+                print(f'#if defined(ARITH_REF) || defined(ARITH_BROADWELL)', file=file)            
+            for obj in self.objs:
+                assert isinstance(obj, Object)
+                print(obj._definition(sz), file=file)
+            if sz != 16:
+                print(f'#elif defined(ARITH_MIKE)', file=file)
+                for obj in self.objs:
+                    assert isinstance(obj, Object)
+                    print(obj._definition(radix_map[sz]), file=file)
+                print('#endif', file=file)
+        print('#endif', file=file)
+
 
 def field(v, F=None):
     if F:
