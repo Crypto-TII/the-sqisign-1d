@@ -1,14 +1,17 @@
 #include <assert.h>
 #include "include/fp.h"
 
+#define PRECISION 502
 #ifdef RADIX_32
 const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xA6E1FFFF, 0x994C68AD, 0x781974CE, 0xFAF0A29A, 0x4A0DEA65, 0xFE3AC590, 0x26507D01, 0x02BDBE63, 0x6936E792, 0x8C15B003, 0xA8869BC6, 0x00255946 };
 const digit_t R2[NWORDS_FIELD] = { 0xC7549CBD, 0x46E4E8A0, 0x43E89EA5, 0xCB993B59, 0x2F1B55C8, 0x545AC09F, 0xACAA06EC, 0x1ADB99DD, 0x55D8B8D4, 0x87994B89, 0x2F9E57C8, 0x2CC2EA62, 0xDAF1003C, 0x2780B5F2, 0x6B8674B8, 0x00169167 };
 const digit_t pp[NWORDS_FIELD] = { 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+const digit_t pre[NWORDS_FIELD] = { 0x9EE85D1D, 0x640F3267, 0x77C81AF6, 0xFE228DB5, 0x1CF87CD4, 0x7CED1891, 0x5D69292E, 0xD6C85A4E, 0x14D3B0BF, 0xEE632C35, 0x719A2FAD, 0xA3B39266, 0xE267D0B9, 0x01E72F81, 0x65541D1A, 0x3EADA };
 #elif defined(RADIX_64)
 const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0x994C68ADA6E1FFFF, 0xFAF0A29A781974CE, 0xFE3AC5904A0DEA65, 0x02BDBE6326507D01, 0x8C15B0036936E792, 0x00255946A8869BC6 };
 const digit_t R2[NWORDS_FIELD] = { 0x46E4E8A0C7549CBD, 0xCB993B5943E89EA5, 0x545AC09F2F1B55C8, 0x1ADB99DDACAA06EC, 0x87994B8955D8B8D4, 0x2CC2EA622F9E57C8, 0x2780B5F2DAF1003C, 0x001691676B8674B8 };
 const digit_t pp[NWORDS_FIELD] = { 0x0000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 };
+const digit_t pre[NWORDS_FIELD] = {0x1B44A459AE36577C, 0x45974EDA6FEA75A2, 0x73EBC5AAC534C13C, 0xC8333F3B39C23D20, 0xF4412A9C2ED41D9D, 0x293ACDCA4BF8FF66, 0xF3BF9342E56321C5, 0x1895A07EAC0712 };
 #endif
 
 void fp_set(digit_t* x, const digit_t val)
@@ -148,7 +151,7 @@ static void fp_exp3div4(digit_t* out, const digit_t* a)
     }
 }
 
-void fp_inv(digit_t* a)
+void _fp_inv(digit_t* a)
 { // Modular inversion, out = x^-1*R mod p, where R = 2^(w*nwords), w is the computer wordsize and nwords is the number of words to represent p
   // Input: a=xR in [0, p-1] 
   // Output: out in [0, p-1]. It outputs 0 if the input does not have an inverse  
@@ -161,7 +164,9 @@ void fp_inv(digit_t* a)
     fp_mul(a, t, a);    // a^(p-2)
 }
 
-bool fp_is_square(const digit_t* a)
+#include "../../inversion.inc"
+
+bool _fp_is_square(const digit_t* a)
 { // Is field element a square?
   // Output: out = 0 (false), 1 (true)
     fp_t t, one;
@@ -174,6 +179,8 @@ bool fp_is_square(const digit_t* a)
 
     return fp_is_equal(t, one);
 }
+
+#include "../../symbol.inc"
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p

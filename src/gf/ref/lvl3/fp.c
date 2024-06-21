@@ -1,14 +1,17 @@
 #include <assert.h>
 #include "include/fp.h"
 
+#define PRECISION 378
 #ifdef RADIX_32
 const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x4C6174C1, 0x356EA468, 0xC722F669, 0x90AEB751, 0x65BC2E0A, 0x45D10AD6, 0xC6AE604A, 0xAB0871A2, 0x03DF6EEE };
 const digit_t R2[NWORDS_FIELD] = { 0x8664617E, 0x47B3E826, 0xBFE4A1AC, 0xDC10C645, 0xF26F21ED, 0x342C8B98, 0x65CD7DB3, 0x328905E4, 0x6EF0DA10, 0x0AFEA5EB, 0x2D56216F, 0x0389174E };
 const digit_t pp[NWORDS_FIELD] = { 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+const digit_t pre[NWORDS_FIELD] = { 0xF27F82B3, 0x55103253, 0x8CD7E6CD, 0x29FE9068, 0x7604EC49, 0x1056CF25, 0x477E2A37, 0xBC9C6EB8, 0xFCA44A33, 0x78F733D6, 0xBA55933F, 0x32700DE };
 #elif defined(RADIX_64)
 const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFFFFFFFFFF, 0x4C6174C1FFFFFFFF, 0xC722F669356EA468, 0x65BC2E0A90AEB751, 0xC6AE604A45D10AD6, 0x03DF6EEEAB0871A2 };
 const digit_t R2[NWORDS_FIELD] = { 0x47B3E8268664617E, 0xDC10C645BFE4A1AC, 0x342C8B98F26F21ED, 0x328905E465CD7DB3, 0x0AFEA5EB6EF0DA10, 0x0389174E2D56216F };
 const digit_t pp[NWORDS_FIELD] = { 0x0000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 };
+const digit_t pre[NWORDS_FIELD] = { 0x46BE935C6F50EA0C, 0x0F49EF66039F81BE, 0x014B6829344C76DC, 0x93D2ABAD109E2E0B, 0xDD07D4B62C849F87, 0x5351137AF42530 };
 #endif
 
 void fp_set(digit_t* x, const digit_t val)
@@ -148,7 +151,7 @@ static void fp_exp3div4(digit_t* out, const digit_t* a)
     }
 }
 
-void fp_inv(digit_t* a)
+void _fp_inv(digit_t* a)
 { // Modular inversion, out = x^-1*R mod p, where R = 2^(w*nwords), w is the computer wordsize and nwords is the number of words to represent p
   // Input: a=xR in [0, p-1] 
   // Output: out in [0, p-1]. It outputs 0 if the input does not have an inverse  
@@ -161,7 +164,9 @@ void fp_inv(digit_t* a)
     fp_mul(a, t, a);    // a^(p-2)
 }
 
-bool fp_is_square(const digit_t* a)
+#include "../../inversion.inc"
+
+bool _fp_is_square(const digit_t* a)
 { // Is field element a square?
   // Output: out = 0 (false), 1 (true)
     fp_t t, one;
@@ -174,6 +179,8 @@ bool fp_is_square(const digit_t* a)
 
     return fp_is_equal(t, one);
 }
+
+#include "../../symbol.inc"
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p
