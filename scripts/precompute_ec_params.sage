@@ -238,4 +238,12 @@ with open('include/ec_params.h', 'w') as hfile:
         print('const digit_t NONRES[NONRES_LEN] = { '+', '.join([str(x) for x in NONRES])+' };',file=cfile)
 
         print('',file=hfile)
+        print('//quadratic residues',file=hfile)
+        print(f'#define NONRES_LEN {NONRES_LEN}',file=hfile)
+        print('extern const digit_t NONRES[NONRES_LEN];',file=hfile)
+        print('',file=cfile)
+        print('//quadratic residues',file=cfile)
+        print('const digit_t NONRES[NONRES_LEN] = { '+', '.join([str(x) for x in NONRES])+' };',file=cfile)
+
+        print('',file=hfile)
         print('#endif', file=hfile)

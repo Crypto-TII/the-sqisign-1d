@@ -70,7 +70,7 @@ void protocols_verif_unpack_chall(ec_curve_t *E2, ec_point_t *dual, const signat
         fp2_copy(&isog2.curve.A, &E.A);
         fp2_copy(&isog2.curve.C, &E.C);
         ec_eval_even(&E, &isog2, &B2.P, 1);
-        ec_complete_basis_2(&B2, &E, &B2.P);
+        ec_complete_basis_2_singularP(&B2, &E, &B2.P);
     }   
     ec_ladder3pt(&K, sig->zip.zip_chain[sig->zip.length-1], &B2.Q, &B2.P, &B2.PmQ, &E);
     copy_point(&isog2.kernel, &K);

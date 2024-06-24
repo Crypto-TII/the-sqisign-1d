@@ -151,6 +151,7 @@ int main(int argc, char* argv[])
 		printf("[%3d%%] Testing basis generation", 100 * iter / (int)TEST_LOOPS);
 		fflush(stdout);
 		printf("\r\x1b[K");
+		fp_t k;
 
 		// Curve coefficient A24=(A+2C:4C)
 		ec_point_t A24;
@@ -191,6 +192,13 @@ int main(int argc, char* argv[])
 			assert(!ec_is_zero(&PpQ2));
 		}
 		assert(is_point_equal(&PmQ2, &PpQ2));
+
+		// Pick the point over (0,0)
+		if(fp2_is_zero(&P2.x)) copy_point(&R, &B2.P);
+		else if(fp2_is_zero(&Q2.x)) copy_point(&R, &B2.Q);
+		else if(fp2_is_zero(&PmQ2.x)) copy_point(&R, &B2.PmQ);
+		else assert(false);
+
 		xDBLv2(&P2, &P2, &A24);
 		assert(ec_is_zero(&P2));
 		xDBLv2(&Q2, &Q2, &A24);
@@ -200,8 +208,43 @@ int main(int argc, char* argv[])
 		xDBLv2(&PpQ2, &PpQ2, &A24);
 		assert(ec_is_zero(&PpQ2));
 
-		// Check the complete_basis function
-		fp_t k;
+		// Check the complete_basis function for singular P
+		ec_complete_basis_2_singularP(&B2, &E, &R);
+
+		// Check that basis is rational
+		assert(ec_is_on_curve(&E, &B2.P));
+		assert(ec_is_on_curve(&E, &B2.Q));
+		assert(ec_is_on_curve(&E, &B2.PmQ));
+
+		// Compute P+Q
+		xADD(&PpQ, &B2.P, &B2.Q, &B2.PmQ);
+
+		// Check the order
+		copy_point(&P2, &B2.P);
+		copy_point(&Q2, &B2.Q);
+		copy_point(&PmQ2, &B2.PmQ);
+		copy_point(&PpQ2, &PpQ);
+		for(int i = 0; i < POWER_OF_2 - 1; i++){
+			xDBLv2(&P2, &P2, &A24);
+			assert(!ec_is_zero(&P2));
+			xDBLv2(&Q2, &Q2, &A24);
+			assert(!ec_is_zero(&Q2));
+			xDBLv2(&PmQ2, &PmQ2, &A24);
+			assert(!ec_is_zero(&PmQ2));
+			xDBLv2(&PpQ2, &PpQ2, &A24);
+			assert(!ec_is_zero(&PpQ2));
+		}
+		assert(is_point_equal(&PmQ2, &PpQ2));
+		xDBLv2(&P2, &P2, &A24);
+		assert(ec_is_zero(&P2));
+		xDBLv2(&Q2, &Q2, &A24);
+		assert(ec_is_zero(&Q2));
+		xDBLv2(&PmQ2, &PmQ2, &A24);
+		assert(ec_is_zero(&PmQ2));
+		xDBLv2(&PpQ2, &PpQ2, &A24);
+		assert(ec_is_zero(&PpQ2));
+
+		// Check the complete_basis function for arbitrary P
 		random_scalar(k);
 		ladder3pt(&R, k, &B2.P, &B2.Q, &B2.PmQ, &A24);
 		ec_complete_basis_2(&B2, &E, &R);

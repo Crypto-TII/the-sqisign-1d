@@ -285,6 +285,16 @@ void ec_ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point
 void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve,
     const digit_t* scalarP, const digit_t* scalarQ,
     const ec_basis_t* PQ);
+    
+/**
+ * @brief Finds a non-zero root of the montgomery curve equation. The curve 
+ * is passed as A/C and the root returned is independent of the projective
+ * representation as long as C is a square.
+ *
+ * @param curve the curve
+ * @param P2 the projective non-zero root of the curve's equation (a.k.a. a point of order 2)
+ */
+void ec_mont_root(ec_point_t *P2, const ec_curve_t *curve);
 
 /** @}
 */
@@ -313,6 +323,17 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve);
  * @param P a point of order 2^f
  */
 void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_point_t* P);
+
+/**
+ * @brief More efficient version of ec_complete_basis_2 when P is known to lie over (0,0)
+ *
+ * Provides the same answer as ec_complete_basis_2 as long as P satifies this condition.
+ *
+ * @param PQ2 a basis of the 2^f-torsion containing P as first generator
+ * @param curve the curve
+ * @param P a point of order 2^f over (0,0)
+ */
+void ec_complete_basis_2_singularP(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_point_t* P);
 
 /**
  * @brief Generate a 3^e-torsion basis
