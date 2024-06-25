@@ -133,5 +133,5 @@ bool fp_is_square(const fp_t a) {
 		k += (f[0] >> 1) & neg;
 	}
 
-	return (k & 1 ? -1 : 1);
+	return (k & 1 ? 0 : 1);
 }
