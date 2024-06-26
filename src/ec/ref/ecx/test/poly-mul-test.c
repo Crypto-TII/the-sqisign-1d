@@ -87,7 +87,7 @@ int main()
 	#define nmax 16
 	#define logn 4
 	#define TREE_SIZE(LENF,h) (1<<(h))*((LENF) + 1 + ((LENF)-1)*h)
-	int DEG[1 << (logn + 1) - 1]; // Degree tree
+	int DEG[(1 << (logn + 1)) - 1]; // Degree tree
 	fp2_t H[TREE_SIZE(nmax+1,logn)], // Product tree
 		F[nmax * (nmax+1)], // Product tree input
 		h[nmax * nmax + 1]; // For in-place multiplication

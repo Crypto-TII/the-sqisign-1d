@@ -37,10 +37,10 @@ int main()
 #define TREE_SIZE(LENF, h) (1 << (h)) * ((LENF) + 1 + ((LENF)-1) * h)
 #define POLY_TREE_INDEX(i, j, LENF, h) (i) * (1 << (h)) * ((LENF)-1) + (1 << (i)) + (j) * ((LENF)-1) * (1 << ((h) - (i))) + (j)-1
 #define SCALAR_TREE_INDEX(i, j) (1 << (i)) - 1 + (j)
-  int DEG[1 << (logn + 1) - 1];                             // Degree tree
+  int DEG[(1 << (logn + 1)) - 1];                             // Degree tree
   fp2_t H[TREE_SIZE(nmax + 1, logn)],                       // Product tree
       F[nmax * (nmax + 1)],                                 // Product tree input
-      R[TREE_SIZE(nmax + 1, logn)], A[1 << (logn + 1) - 1]; // Residue tree
+      R[TREE_SIZE(nmax + 1, logn)], A[(1 << (logn + 1)) - 1]; // Residue tree
 
   fp2_t h[nmax * nmax + 1], f[nmax * nmax + 1], g[nmax * nmax + 1], f_rev[nmax * nmax + 1],
       f_rev_inv[nmax * nmax + 1], g1[nmax * nmax + 1], g2[nmax * nmax + 1], REM1[nmax],
