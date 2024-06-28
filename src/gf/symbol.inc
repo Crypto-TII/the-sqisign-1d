@@ -83,7 +83,7 @@ static digit_t porninstep(sdigit_t m[4], const digit_t f[2], const digit_t g[2],
 
 bool fp_is_square(const fp_t a) {
 	const size_t s = RADIX - 2;
-	digit_t f[NWORDS_FIELD + 1], g[NWORDS_FIELD + 1], t[NWORDS_FIELD] = { 0 };
+	digit_t f[NWORDS_FIELD + 1], g[NWORDS_FIELD + 1], t[NWORDS_FIELD + 1] = { 0 };
 	digit_t t0[NWORDS_FIELD + 1], t1[NWORDS_FIELD + 1];
 	digit_t g_[2], f_[2], neg, l, g_hi, g_lo, f_hi, f_lo, mask, k = 0;
 	sdigit_t m[4];
