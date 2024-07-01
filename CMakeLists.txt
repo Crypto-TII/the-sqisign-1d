@@ -21,10 +21,12 @@ if (NOT DEFINED SQISIGN_BUILD_TYPE)
 endif()
 
 if(SQISIGN_BUILD_TYPE STREQUAL "broadwell")
-	SET(SVARIANT_S "lvl1")
+	SET(SVARIANT_S "lvl1") #Variants that include verification
+	SET(SVARIANTSIGN_S "lvl1") #Variants that include signature + verification
 	add_definitions(-DARITH_BROADWELL)
 else()
-	SET(SVARIANT_S "lvl1;lvl3;lvl5")
+	SET(SVARIANT_S "lvl1;lvl1_p248;lvl3;lvl5") #Variants that include verification
+	SET(SVARIANTSIGN_S "lvl1;lvl3;lvl5") #Variants that include signature + verification
 	if(SQISIGN_BUILD_TYPE STREQUAL "mike")
 		add_definitions(-DARITH_MIKE)
 	else()
@@ -45,6 +47,7 @@ endif()
 
 set(SELECT_IMPL_TYPE ${PROJECT_SOURCE_DIR}/.cmake/impl_type.cmake)
 set(SELECT_SQISIGN_VARIANT ${PROJECT_SOURCE_DIR}/.cmake/sqisign_variant.cmake)
+set(SELECT_SQISIGN_VARIANT_FOR_SIGN_MODULES ${PROJECT_SOURCE_DIR}/.cmake/sqisign_variant_for_sign_modules.cmake)
 
 set(INC_PUBLIC ${PROJECT_SOURCE_DIR}/include)
 

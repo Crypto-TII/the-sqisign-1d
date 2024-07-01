@@ -19,6 +19,9 @@ if p % 4 != 3:
 if (p == 0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff):
     # lvl1
     radix_map = { 32: 29, 64: 52 }
+if (p == 0x4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff):
+    # lvl1_p248
+    radix_map = { 32: 29, 64: 51 }
 elif (p == 0x3df6eeeab0871a2c6ae604a45d10ad665bc2e0a90aeb751c722f669356ea4684c6174c1ffffffffffffffffffffffff):
     # lvl3
     radix_map = { 32: 28, 64: 55 }

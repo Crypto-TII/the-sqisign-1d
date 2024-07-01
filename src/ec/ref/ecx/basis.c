@@ -453,7 +453,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
         xTPL(&PQ2->P, &PQ2->P, &A3);
         xTPL(&PQ2->Q, &PQ2->Q, &A3);
     }
-    for(int i = 1; i < P_LEN; i++){
+    for(int i = (POWER_OF_3 > 0) & 1; i < P_LEN; i++){
         for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
             xMULdac(&PQ2->P, &PQ2->P, DACS[i], DAC_LEN[i], &A24);
             xMULdac(&PQ2->Q, &PQ2->Q, DACS[i], DAC_LEN[i], &A24);
@@ -509,7 +509,7 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
         for(int i = 0; i < POWER_OF_3; i++){
             xTPL(&Q, &Q, &A3);
         }
-        for(int i = 1; i < P_LEN; i++){
+        for(int i = (POWER_OF_3 > 0) & 1; i < P_LEN; i++){
             for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
                 xMULdac(&Q, &Q, DACS[i], DAC_LEN[i], &A24);
             }
@@ -590,7 +590,7 @@ void ec_complete_basis_2_singularP(ec_basis_t* PQ2, const ec_curve_t* curve, con
         for(int i = 0; i < POWER_OF_3; i++){
             xTPL(&Q, &Q, &A3);
         }
-        for(int i = 1; i < P_LEN; i++){
+        for(int i = (POWER_OF_3 > 0) & 1; i < P_LEN; i++){
             for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
                 xMULdac(&Q, &Q, DACS[i], DAC_LEN[i], &A24);
             }

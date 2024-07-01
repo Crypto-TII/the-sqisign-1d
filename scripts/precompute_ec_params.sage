@@ -41,10 +41,11 @@ L = Lpls + Lmin
 E = Epls + Emin
 ################################################################
 
+NOPOWEROF3 = False
 if p % 4 != 3:
     raise NotImplementedError('requires p ≡ 3 (mod 4)')
-if 3 not in Lpls or 3 in Lmin:
-    raise NotImplementedError('power of 3 must be in the positive torsion')
+if 3 not in Lpls:
+    NOPOWEROF3 = True
 
 ################################################################
 
@@ -171,6 +172,7 @@ with open('include/ec_params.h', 'w') as hfile:
         print('',file=hfile)
         print(f'#define POWER_OF_2 {f}', file=hfile)
         print(f'#define POWER_OF_3 {g}', file=hfile)
+        print(f'#define DLOG_SCALAR_BITS {max(math.floor(math.log(2**(f/2),2)), math.floor(math.log(3**(g/2),2)))}', file=hfile)
         print('',file=hfile)
         print('#define scaled 1', file=hfile)
         print('#define gap 83', file=hfile)

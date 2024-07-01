@@ -685,7 +685,7 @@ void DBLMUL(jac_point_t* R, const jac_point_t* P, const digit_t* k, const jac_po
     ADD(&PQ, P, Q, curve);
     jac_init(R);
 
-    for (int i = 72; i >= 0; i--) {
+    for (int i = DLOG_SCALAR_BITS; i >= 0; i--) {
         int w = i/RADIX;
         k_t = k[w] >> (i % RADIX);
         k_t &= 0x01;
@@ -1004,7 +1004,9 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
 }
 
 static void ec_dlog_3_step(digit_t* x, digit_t* y, const jac_point_t* R, const int f, const int B, const jac_point_t* Pe3, const jac_point_t* Qe3, const jac_point_t* PQe3, const ec_curve_t* curve)
-{ // Based on Montgomery formulas using Jacobian coordinates
+{ 
+#if POWER_OF_3 > 2
+    // Based on Montgomery formulas using Jacobian coordinates
     int i, j;
     digit_t one[NWORDS_ORDER] = {1};
     digit_t two[NWORDS_ORDER] = {2};
@@ -1339,10 +1341,15 @@ static void ec_dlog_3_step(digit_t* x, digit_t* y, const jac_point_t* R, const i
         mp_add(y, y, value, NWORDS_ORDER);
         mp_add(y, y, value, NWORDS_ORDER);
     }
+#else
+    return;
+#endif
 }
 
 void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const ec_point_t* R, const ec_curve_t* curve)
-{ // Optimized implementation based on Montgomery formulas using Jacobian coordinates
+{ 
+#if POWER_OF_3 > 2
+    // Optimized implementation based on Montgomery formulas using Jacobian coordinates
     int i;
     digit_t w0[NWORDS_ORDER] = {0}, z0[NWORDS_ORDER] = {0}, x0[NWORDS_ORDER] = {0}, y0[NWORDS_ORDER] = {0};
     digit_t x1[NWORDS_ORDER] = {0}, y1[NWORDS_ORDER] = {0}, w1[NWORDS_ORDER] = {0}, z1[NWORDS_ORDER] = {0};
@@ -1452,6 +1459,9 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
         if (mp_is_zero(scalarQ, NWORDS_ORDER) != 1)
             mp_sub(scalarQ, TORSION_PLUS_3POWER_DIGITS, scalarQ, NWORDS_ORDER);
     }
+#else
+    return;
+#endif
 }
 
 

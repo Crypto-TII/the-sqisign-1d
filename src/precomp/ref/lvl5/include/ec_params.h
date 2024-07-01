@@ -6,6 +6,7 @@
 
 #define POWER_OF_2 145
 #define POWER_OF_3 72
+#define DLOG_SCALAR_BITS 72
 
 #define scaled 1
 #define gap 83

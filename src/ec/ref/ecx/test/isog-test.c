@@ -288,6 +288,7 @@ int main(int argc, char* argv[])
 		fp2_copy(&A3.x, &A24.x);
 		fp2_sub(&A3.z, &A3.x, &A24.z);
 
+#if POWER_OF_3 > 0
 		// Construct basis for 3^g torsion
 		ec_basis_t B3;
 		ec_curve_to_basis_3(&B3, &E);
@@ -409,6 +410,7 @@ int main(int argc, char* argv[])
         assert(!ec_is_zero(&R));
         xDBLv2(&R, &R, &A24);
         assert(ec_is_zero(&R));
+#endif
 
 
 		// Compute a 2^e-basis with 2^(e-1)*Q=(0,0)
@@ -439,7 +441,7 @@ int main(int argc, char* argv[])
 		fp2_copy(&isog.curve.C, &E.C);
 		copy_point(&isog.kernel, &R);
 		isog.length = POWER_OF_2;
-		ec_eval_even_nonzero(&E, &isog, &B3.P, 1);
+		ec_eval_even_nonzero(&E, &isog, &B2.P, 1);
 	}
 	printf("[%2d%%] Tested basis generation:\t\tNo errors!\n", 100);
 	
@@ -625,6 +627,7 @@ int main(int argc, char* argv[])
 		fp2_add(&A3.x, &E.A, &A3.z);
 		fp2_sub(&A3.z, &E.A, &A3.z);
 
+#if POWER_OF_3 > 0
 		// Check order of the pushed 3^g-basis
 		ec_point_t P3, Q3, PmQ3, PpQ, PpQ3;
 		xADD(&PpQ, &B3.P, &B3.Q, &B3.PmQ);
@@ -652,6 +655,7 @@ int main(int argc, char* argv[])
 		assert(ec_is_zero(&PmQ3));
 		xTPL(&PpQ3, &PpQ3, &A3);
 		assert(ec_is_zero(&PpQ3));
+	#endif
 	}
 	printf("[%2d%%] Tested 2^f-isogenies (nonzero):\tNo errors!\n", 100);
 	
@@ -708,6 +712,7 @@ int main(int argc, char* argv[])
 		fp2_add(&A3.x, &E.A, &A3.z);
 		fp2_sub(&A3.z, &E.A, &A3.z);
 
+#if POWER_OF_3 > 0
 		// Check order of the pushed 3^g-basis
 		ec_point_t P3, Q3, PmQ3, PpQ, PpQ3;
 		xADD(&PpQ, &B3.P, &B3.Q, &B3.PmQ);
@@ -735,9 +740,11 @@ int main(int argc, char* argv[])
 		assert(ec_is_zero(&PmQ3));
 		xTPL(&PpQ3, &PpQ3, &A3);
 		assert(ec_is_zero(&PpQ3));
+#endif
 	}
 	printf("[%2d%%] Tested 2^f-isogenies:\t\tNo errors! (%7lld cycles)\n", 100, cycles/TEST_LOOPS);\
 
+#if POWER_OF_3 > 0
 	// ----------------- TEST FOR 3^g ISOGENIES ----------------- //
 
 	// Initial curve with A = 0
@@ -816,6 +823,7 @@ int main(int argc, char* argv[])
 		assert(ec_is_zero(&PpQ2));
 	}
 	printf("[%2d%%] Tested 3^g-isogenies:\t\tNo errors!\n", 100);
+#endif
 
 #if defined(ENABLE_SIGN)
 
