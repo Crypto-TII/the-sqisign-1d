@@ -195,96 +195,111 @@ bool fp2_run()
     bool OK = true;
     int n;
     unsigned long long cycles, cycles1, cycles2;
-    fp2_t a, b, c;
+    fp2_t *a, *b, *c;
 
     printf("\n--------------------------------------------------------------------------------------------------------\n\n");
     printf("Benchmarking arithmetic over GF(p^2): \n\n");
 
-    fp2random_test(&a); fp2random_test(&b); fp2random_test(&c);
+    a = (fp2_t*)malloc(BENCH_LOOPS*sizeof(fp2_t));
+    b = (fp2_t*)malloc(BENCH_LOOPS*sizeof(fp2_t));
+    c = (fp2_t*)malloc(BENCH_LOOPS*sizeof(fp2_t));
+
+    // Randomize arrays
+    for (n=0; n<BENCH_LOOPS; n++)
+    {
+        fp2random_test(&a[n]);
+        fp2random_test(&b[n]);
+        fp2random_test(&c[n]);
+    }
 
     // GF(p^2) addition
     cycles = 0;
+    cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_add(&c, &a, &b);
-        cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        fp2_add(&c[n], &a[n], &b[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles+(cycles2-cycles1);
     printf("  GF(p^2) addition runs in .......................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // GF(p^2) subtraction
     cycles = 0;
+        cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_sub(&c, &a, &b);
-        cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        fp2_sub(&c[n], &a[n], &b[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles+(cycles2-cycles1);
     printf("  GF(p^2) subtraction runs in ....................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // GF(p^2) squaring
     cycles = 0;
+    cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_sqr(&c, &a);
-        cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        fp2_sqr(&c[n], &a[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles + (cycles2 - cycles1);
     printf("  GF(p^2) squaring runs in .......................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // GF(p^2) multiplication
     cycles = 0;
+        cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_mul(&c, &a, &b);
-        cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        fp2_mul(&c[n], &a[n], &b[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles+(cycles2-cycles1);
     printf("  GF(p^2) multiplication runs in .................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // GF(p^2) inversion
     cycles = 0;
+        cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_inv(&a);
-        cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        fp2_inv(&a[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles + (cycles2 - cycles1);
     printf("  GF(p^2) inversion runs in ......................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // GF(p^2) square root
     cycles = 0;
+    cycles1 = cpucycles();
     for (n = 0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_sqrt(&a);
-        cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        fp2_sqrt(&a[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles + (cycles2 - cycles1);
     printf("  GF(p^2) square root runs in ....................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
     // Square checking
     cycles = 0;
+        cycles1 = cpucycles();
     for (n=0; n<BENCH_LOOPS; n++)
     {
-        cycles1 = cpucycles();
-        fp2_is_square(&a);
-        cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        fp2_is_square(&a[n]);
     }
+    cycles2 = cpucycles();
+    cycles = cycles + (cycles2 - cycles1);
     printf("  Square checking runs in ........................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
+
+    // Free memory
+    free(a);
+    free(b);
+    free(c);
 
     return OK;
 }
