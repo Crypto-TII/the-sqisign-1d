@@ -39,15 +39,15 @@ else()
 endif()
 add_subdirectory(gf)
 add_subdirectory(ec)
-
 add_subdirectory(id2iso)
 add_subdirectory(protocols)
 
 FOREACH(SVARIANT ${SVARIANT_S})
     string(TOLOWER ${SVARIANT} SVARIANT_LOWER)
     string(TOUPPER ${SVARIANT} SVARIANT_UPPER)
-    set(SOURCE_FILES_VARIANT sqisign.c)
+
     # Library for SQIsign variant
+    set(SOURCE_FILES_VARIANT sqisign.c)
     add_library(sqisign_${SVARIANT_LOWER} ${SOURCE_FILES_VARIANT})
     target_link_libraries(sqisign_${SVARIANT_LOWER} PUBLIC 
         ${LIB_PROTOCOLS_${SVARIANT_UPPER}} 
@@ -61,12 +61,8 @@ FOREACH(SVARIANT ${SVARIANT_S})
         ${GMP} 
         sqisign_common_sys
     )
-
     target_include_directories(sqisign_${SVARIANT_LOWER} PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
     target_compile_definitions(sqisign_${SVARIANT_LOWER} PUBLIC SQISIGN_VARIANT=${SVARIANT})
-    if(NOT "${SVARIANTSIGN_S}" MATCHES ".*${SVARIANT}.*")
-        target_compile_options(sqisign_${SVARIANT_LOWER} PRIVATE -UENABLE_SIGN)
-    endif()
 
     # Library for SQIsign variant (test)
     add_library(sqisign_${SVARIANT_LOWER}_test ${SOURCE_FILES_VARIANT})
@@ -82,27 +78,26 @@ FOREACH(SVARIANT ${SVARIANT_S})
         ${GMP} 
         sqisign_common_test
     )
-
     target_include_directories(sqisign_${SVARIANT_LOWER}_test PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
     target_compile_definitions(sqisign_${SVARIANT_LOWER}_test PUBLIC SQISIGN_VARIANT=${SVARIANT})
-    if(NOT "${SVARIANTSIGN_S}" MATCHES ".*${SVARIANT}.*")
-        target_compile_options(sqisign_${SVARIANT_LOWER}_test PRIVATE -UENABLE_SIGN)
-    endif()
 
     # Library with NIST API
     set(SOURCE_FILE_NISTAPI nistapi/${SVARIANT_LOWER}/api.c)
     add_library(sqisign_${SVARIANT_LOWER}_nistapi ${SOURCE_FILE_NISTAPI})
     target_link_libraries(sqisign_${SVARIANT_LOWER}_nistapi PRIVATE sqisign_${SVARIANT_LOWER})
     target_include_directories(sqisign_${SVARIANT_LOWER}_nistapi PUBLIC nistapi/${SVARIANT_LOWER} PUBLIC ../include)
-    if(NOT "${SVARIANTSIGN_S}" MATCHES ".*${SVARIANT}.*")
-        target_compile_options(sqisign_${SVARIANT_LOWER}_nistapi PRIVATE -UENABLE_SIGN)
-    endif()
 
     # Library with NIST API (test)
     add_library(sqisign_${SVARIANT_LOWER}_test_nistapi ${SOURCE_FILE_NISTAPI})
     target_link_libraries(sqisign_${SVARIANT_LOWER}_test_nistapi PRIVATE sqisign_${SVARIANT_LOWER}_test)
     target_include_directories(sqisign_${SVARIANT_LOWER}_test_nistapi PUBLIC nistapi/${SVARIANT_LOWER})
-    if(NOT "${SVARIANTSIGN_S}" MATCHES ".*${SVARIANT}.*")
-        target_compile_options(sqisign_${SVARIANT_LOWER}_test_nistapi PRIVATE -UENABLE_SIGN)
+
+    # Add definitions when ENABLE_SIGN is ON
+    if(ENABLE_SIGN AND ${SVARIANT_LOWER} IN_LIST SVARIANTSIGN_S)
+        target_compile_definitions(sqisign_${SVARIANT_LOWER} PUBLIC ENABLE_SIGN)
+        target_compile_definitions(sqisign_${SVARIANT_LOWER}_test PUBLIC ENABLE_SIGN)
+        target_compile_definitions(sqisign_${SVARIANT_LOWER}_nistapi PUBLIC ENABLE_SIGN)
+        target_compile_definitions(sqisign_${SVARIANT_LOWER}_test_nistapi PUBLIC ENABLE_SIGN)
     endif()
+
 ENDFOREACH()

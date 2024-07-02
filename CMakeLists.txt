@@ -17,21 +17,21 @@ option(ENABLE_SIGN "Build with sign functionality" ON)
 option(ENABLE_DOC_TARGET "Enable building API documentation using doxygen" OFF)
 
 if (NOT DEFINED SQISIGN_BUILD_TYPE)
-	SET(SQISIGN_BUILD_TYPE "ref")
+	set(SQISIGN_BUILD_TYPE "ref")
 endif()
 
 if(SQISIGN_BUILD_TYPE STREQUAL "broadwell")
-	SET(SVARIANT_S "lvl1") #Variants that include verification
-	SET(SVARIANTSIGN_S "lvl1") #Variants that include signature + verification
-	add_definitions(-DARITH_BROADWELL)
+	set(SVARIANT_S "lvl1")
+	set(SVARIANTSIGN_S "lvl1")
+	add_compile_definitions(ARITH_BROADWELL)
+elseif(SQISIGN_BUILD_TYPE STREQUAL "mike")
+	set(SVARIANT_S "lvl1;lvl1_p248;lvl3;lvl5")
+	set(SVARIANTSIGN_S "lvl1;lvl3;lvl5")
+	add_compile_definitions(ARITH_MIKE)
 else()
-	SET(SVARIANT_S "lvl1;lvl1_p248;lvl3;lvl5") #Variants that include verification
-	SET(SVARIANTSIGN_S "lvl1;lvl3;lvl5") #Variants that include signature + verification
-	if(SQISIGN_BUILD_TYPE STREQUAL "mike")
-		add_definitions(-DARITH_MIKE)
-	else()
-		add_definitions(-DARITH_REF)
-	endif()
+	set(SVARIANT_S "lvl1;lvl1_p248;lvl3;lvl5")
+	set(SVARIANTSIGN_S "lvl1;lvl3;lvl5")
+	add_compile_definitions(ARITH_REF)
 endif()
 
 include(.cmake/flags.cmake)
@@ -42,12 +42,10 @@ if(ENABLE_DOC_TARGET)
 endif()
 if(ENABLE_SIGN)
 	include(.cmake/gmpconfig.cmake)
-	add_compile_definitions(ENABLE_SIGN)
 endif()
 
 set(SELECT_IMPL_TYPE ${PROJECT_SOURCE_DIR}/.cmake/impl_type.cmake)
 set(SELECT_SQISIGN_VARIANT ${PROJECT_SOURCE_DIR}/.cmake/sqisign_variant.cmake)
-set(SELECT_SQISIGN_VARIANT_FOR_SIGN_MODULES ${PROJECT_SOURCE_DIR}/.cmake/sqisign_variant_for_sign_modules.cmake)
 
 set(INC_PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
