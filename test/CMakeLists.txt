@@ -11,6 +11,10 @@ FOREACH(SVARIANT ${SVARIANT_S})
     add_executable(sqisign_test_prof_${SVARIANT} test_sqisign_prof.c)
     target_link_libraries(sqisign_test_prof_${SVARIANT} sqisign_${SVARIANT_LOWER})
     target_include_directories(sqisign_test_prof_${SVARIANT} PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
+    
+    add_executable(sqisign_bench_verif_kat_${SVARIANT} bench_verif_kat.c)
+    target_link_libraries(sqisign_bench_verif_kat_${SVARIANT} sqisign_${SVARIANT_LOWER})
+    target_include_directories(sqisign_bench_verif_kat_${SVARIANT} PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
 
     if(ENABLE_SIGN AND ${SVARIANT_LOWER} IN_LIST SVARIANTSIGN_S)
         add_executable(sqisign_bench_${SVARIANT} bench.c)

@@ -7,7 +7,7 @@
 #define CRYPTO_PUBLICKEYBYTES   64
 #define CRYPTO_BYTES           177
 
-#define CRYPTO_ALGNAME "lvl1"
+#define CRYPTO_ALGNAME "lvl1_p248"
 
 #if defined(ENABLE_SIGN)
 int
