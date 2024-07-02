@@ -6,6 +6,7 @@
 
 #define POWER_OF_2 75
 #define POWER_OF_3 36
+#define POWER_OF_2_SECPAR 128
 #define DLOG_SCALAR_BITS 37
 
 #define scaled 1
@@ -17,6 +18,8 @@
 extern const digit_t p_plus_minus_bitlength[P_LEN + M_LEN];
 
 extern const digit_t STRATEGY4[];
+extern const digit_t STRATEGY4_SMART[];
+extern const digit_t STRATEGY4_CHAL[];
 
 extern const digit_t sizeI[];
 extern const digit_t sizeJ[];
@@ -44,8 +47,10 @@ extern const digit_t p_cofactor_for_6fg[NWORDS_ORDER];
 extern const digit_t DACS[28];
 extern const int DAC_LEN[28];
 
-//quadratic residues
 #define NONRES_LEN 128
+//Values of k for which 1+ik is a non-square
 extern const digit_t NONRES[NONRES_LEN];
+//Values of k for which 2+ik is a square but 1+ik is not
+extern const digit_t SMARTZ[NONRES_LEN];
 
 #endif

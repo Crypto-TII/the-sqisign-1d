@@ -30,7 +30,7 @@ q4 = 2452
 
 ################################################################
 
-from parameters import p, f, Tpls, Tmin
+from parameters import p, f, Tpls, Tmin, lvl
 g = valuation(Tpls, 3)
 T = Tpls * Tmin
 Lpls = [x[0] for x in factor(Tpls)]
@@ -90,10 +90,21 @@ def print_dac(dac, name, len, file):
     for bit in dac: print(f'{bit}', end='', file=file)
     if len==0: print('0', end='', file=file)
     print('\";', file=file)
+ 
+
+# Degree of the challenge isogeny
+if(lvl == 1): secpar = 128
+elif(lvl == 3): secpar = 192
+elif(lvl == 5): secpar = 256
+else: raise NotImplementedError(f'security level {lvl} not found')
 
 bL = '{'+', '.join([str(ceil(log(l,2))) for l in L])+'}'
 strategy4 = strategy(f//2-1, 2*p2, q4)
 strategy4 = '{'+', '.join([str(s) for s in strategy4])+'}'
+strategy4_smart = strategy(f//2, 2*p2, q4)
+strategy4_smart = '{'+', '.join([str(s) for s in strategy4_smart])+'}'
+strategy4_chal = strategy(secpar//2, 2*p2, q4)
+strategy4_chal = '{'+', '.join([str(s) for s in strategy4_chal])+'}'
 
 ## The following primes have IJK that have been optimized externally by an exhaustive dac_search
 if p == 0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff: # Nist lvl1
@@ -131,11 +142,13 @@ sizeK = '{'+', '.join([str(s) for s in sizeK])+'}'
 Fp2.<i> = GF((p,2), modulus=[1,0,1])
 NONRES_LEN = 128
 NONRES = []
+SMARTZ = []
 k = 0
-while len(NONRES) < NONRES_LEN:
+while len(NONRES) < NONRES_LEN or len(SMARTZ) < NONRES_LEN:
     k+=1
     if not (1+k*i).is_square():
-        NONRES.append(k)
+        if len(NONRES) < NONRES_LEN: NONRES.append(k)
+        if (2+k*i).is_square() and len(SMARTZ) < NONRES_LEN: SMARTZ.append(k)  
 
 ################################################################
 
@@ -172,6 +185,7 @@ with open('include/ec_params.h', 'w') as hfile:
         print('',file=hfile)
         print(f'#define POWER_OF_2 {f}', file=hfile)
         print(f'#define POWER_OF_3 {g}', file=hfile)
+        print(f'#define POWER_OF_2_SECPAR {secpar}', file=hfile)
         print(f'#define DLOG_SCALAR_BITS {max(math.floor(math.log(2**(f/2),2)), math.floor(math.log(3**(g/2),2)))}', file=hfile)
         print('',file=hfile)
         print('#define scaled 1', file=hfile)
@@ -184,6 +198,8 @@ with open('include/ec_params.h', 'w') as hfile:
         print('const digit_t p_plus_minus_bitlength[P_LEN + M_LEN] =\n\t'+bL+';', file=cfile)
         print('',file=cfile)
         print(f'const digit_t STRATEGY4[] =\n\t'+strategy4+';', file=cfile)
+        print(f'const digit_t STRATEGY4_SMART[] =\n\t'+strategy4_smart+';', file=cfile)
+        print(f'const digit_t STRATEGY4_CHAL[] =\n\t'+strategy4_chal+';', file=cfile)
         print('',file=cfile)
         print(f'const digit_t sizeI[] =\n\t'+sizeI+';', file=cfile)
         print(f'const digit_t sizeJ[] =\n\t'+sizeJ+';', file=cfile)
@@ -193,6 +209,8 @@ with open('include/ec_params.h', 'w') as hfile:
         print('extern const digit_t p_plus_minus_bitlength[P_LEN + M_LEN];', file=hfile)
         print('',file=hfile)
         print(f'extern const digit_t STRATEGY4[];', file=hfile)
+        print(f'extern const digit_t STRATEGY4_SMART[];', file=hfile)
+        print(f'extern const digit_t STRATEGY4_CHAL[];', file=hfile)
         print('',file=hfile)
         print(f'extern const digit_t sizeI[];', file=hfile)
         print(f'extern const digit_t sizeJ[];', file=hfile)
@@ -233,11 +251,16 @@ with open('include/ec_params.h', 'w') as hfile:
         print('};', file=cfile)
         print('',file=cfile)
 
-        print('//quadratic residues',file=hfile)
         print(f'#define NONRES_LEN {NONRES_LEN}',file=hfile)
+        print('//Values of k for which 1+ik is a non-square',file=hfile)
         print('extern const digit_t NONRES[NONRES_LEN];',file=hfile)
-        print('//quadratic residues',file=cfile)
+        print('//Values of k for which 1+ik is a non-square',file=cfile)
         print('const digit_t NONRES[NONRES_LEN] = { '+', '.join([str(x) for x in NONRES])+' };',file=cfile)
+
+        print('//Values of k for which 2+ik is a square but 1+ik is not',file=hfile)
+        print('extern const digit_t SMARTZ[NONRES_LEN];',file=hfile)
+        print('//Values of k for which 2+ik is a square but 1+ik is not',file=cfile)
+        print('const digit_t SMARTZ[NONRES_LEN] = { '+', '.join([str(x) for x in SMARTZ])+' };',file=cfile)
 
         print('',file=hfile)
         print('#endif', file=hfile)

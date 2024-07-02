@@ -304,7 +304,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     copy_point(&PQ6->Q, &Q);
 }
 
-bool profile(const ec_point_t *L, const fp2_t *x){
+static bool profile(const ec_point_t *L, const fp2_t *x){
     // Computes the profile of an affine x with respect to a 2-torsion point different than (0,0)
     // e.g. the reduced tate pairing t_2(L, P) with P.x = x and P.z = 1.
 
@@ -316,7 +316,7 @@ bool profile(const ec_point_t *L, const fp2_t *x){
 }
 
 
-bool profile2(const ec_point_t *L, const fp2_t *x){
+static bool profile2(const ec_point_t *L, const fp2_t *x){
     // Computes the product of the profiles of an affine x with the two
     // non-(0,0) points of order 2, Pa = (Lx:Lz) and Pb = (Lz:Lx).
 
@@ -333,32 +333,22 @@ bool profile2(const ec_point_t *L, const fp2_t *x){
     return fp2_is_square(&t1) || fp2_is_zero(&t1);
 }
 
-bool profile_is_on_curve(bool p0, bool pa, bool pb){
-    int on_curve = p0 + pa + pb;
-    return (on_curve == 1 || on_curve == 3);
+static bool profile_proj(const ec_point_t *L, const ec_point_t *P){
+    // Same as profile but for a projective x coordinate
+    fp2_t t1, t2;
+    fp2_mul(&t1, &L->z, &P->x);
+    fp2_mul(&t2, &L->x, &P->z);
+    fp2_sub(&t1, &t1, &t2);
+    fp2_mul(&t1, &t1, &L->z);
+    fp2_mul(&t1, &t1, &P->z);
+    return fp2_is_square(&t1) || fp2_is_zero(&t1);
 }
 
-void ec_mont_root(ec_point_t *P2, const ec_curve_t *curve){
-    fp2_t t0, t1;
-
-    // Normalize by C_conj
-    fp_copy(P2->z.re, curve->C.re);
-    fp_neg(P2->z.im, curve->C.im);
-    fp2_mul(&P2->x, &P2->z, &curve->A);
-    fp2_mul(&P2->z, &P2->z, &curve->C);
-
-    fp2_add(&P2->z, &P2->z, &P2->z);
-    fp2_add(&t0, &P2->x, &P2->z);
-    fp2_sub(&t1, &P2->x, &P2->z);
-    fp2_mul(&t0, &t0, &t1);
-    fp2_sqrt(&t0);
-    fp2_sub(&P2->x, &t0, &P2->x);
-}
-
-void ec_curve_to_implicit_basis_seed(digit_t *kP, digit_t *kQ, const ec_point_t *Pa){
+static void ec_curve_to_implicit_basis_seed(digit_t *kP, digit_t *kQ, const ec_point_t *Pa){
     // Profile-based method for computing an implicit basis for the 2^f-torsion given
     // a non-(0,0) point P2 of order 2. Returns only the constants kP, kQ so that
     // Px = 1 + kP*i and Qx = 1 + kQ*i
+    // Compatible with Nist round 1 KATs
 
     fp2_t x;
     bool p0, pa, pb, pab;
@@ -418,6 +408,67 @@ void ec_curve_to_implicit_basis_seed(digit_t *kP, digit_t *kQ, const ec_point_t 
     }
 }
 
+static void ec_curve_to_implicit_basis_seed_smart(digit_t *kP, digit_t *kQ, const ec_point_t *Pa){
+    // Optimized version of ec_curve_to_implicit_basis_seed based on the smart sampling
+    // technique from https://eprint.iacr.org/2023/1559.pdf
+    // NOT compatible with Nist round 1 KATs
+
+    fp2_t x;
+    digit_t k = 0;
+
+    // The other point of order 2
+    ec_point_t Pb, Q;
+    fp2_copy(&Pb.x, &Pa->z);
+    fp2_copy(&Pb.z, &Pa->x);
+
+    *kP = 0;
+    *kQ = 0;
+
+    fp_mont_setone(x.re);
+
+    // Find point P not over (0,0)
+    for(int i = 0; i < NONRES_LEN; i++){
+        k = NONRES[i];
+        fp_set(x.im, k);
+        fp_tomont(x.im, x.im);
+        if(!profile2(Pa, &x)){
+            *kP = k;
+            break;
+        }
+    }
+    // On the unlikely event that we run out of NONRES elements without finding the point
+    while(*kP == 0){
+        k += 1;
+        fp_set(x.im, k);
+        fp_tomont(x.im, x.im);
+        if(fp2_is_square(&x)) continue;
+        if(!profile2(Pa, &x)) *kP = k;
+    }
+
+    // Find point Q over (0,0)
+    fp_add(x.re, x.re, x.re);
+    for(int i = 0; i < NONRES_LEN; i++){
+        k = SMARTZ[i];
+        fp_set(x.im, k);
+        fp_tomont(x.im, x.im);
+        fp2_mul(&Q.x, &x, &Pa->x);
+        fp2_copy(&Q.z, &Pa->z);
+        if(!profile_proj(&Pb, &Q)){
+            *kQ = k;
+            break;
+        }
+    }
+    // On the unlikely event that we run out of SMARTZ elements without finding the point
+    while(*kQ == 0){
+        k += 1;
+        fp_set(x.im, k);
+        fp_tomont(x.im, x.im);
+        if(!fp2_is_square(&x)) continue;
+        if(profile(&Pb, &x)) continue;
+        if(!profile2(Pa, &x)) *kQ = k;
+    }
+}
+
 void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
     // Profile-based method for computing a basis for the 2^f-torsion
     // KAT-compatible with original NIST submission
@@ -462,6 +513,26 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
     
     // Compute P-Q
     difference_point(&PQ2->PmQ, &PQ2->P, &PQ2->Q, curve);
+}
+
+void ec_curve_to_implicit_basis_2_smart(ec_point_t *P, ec_point_t *Q, const ec_point_t *Pa){
+    // Computes basis point P and Q (without difference point) for an implicit basis using
+    // a non-(0,0) point Pa of order 2 on the curve.
+
+    digit_t kP, kQ;
+    ec_curve_to_implicit_basis_seed_smart(&kP, &kQ, Pa);
+
+    fp_set(P->x.re, 1);
+    fp_set(Q->x.re, 2);
+    fp_set(P->x.im, kP);
+    fp_set(Q->x.im, kQ);
+    fp_set(P->z.re, 1);
+    fp_set(Q->z.re, 1);
+    fp_set(P->z.im, 0);
+    fp_set(Q->z.im, 0);
+
+    fp2_mul(&Q->x, &Q->x, &Pa->x);
+    fp2_mul(&Q->z, &Q->z, &Pa->z);
 }
 
 void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_point_t* P){
@@ -604,4 +675,67 @@ void ec_complete_basis_2_singularP(ec_basis_t* PQ2, const ec_curve_t* curve, con
     difference_point(&PQ2->PmQ, P, &Q, curve);
     copy_point(&PQ2->Q, &Q);
     copy_point(&PQ2->P, P);
+}
+
+void ec_scalar_to_kernel_smart(ec_point_t *K, const ec_point_t *Pa, const digit_t *scalar, const bool swapPQ){
+
+    ec_point_t P,Q,PQ,A24;
+    ec_curve_t curve;
+
+    // A24 curve coefficient
+    ec_A24_from_mont_root(&A24, Pa);
+
+    // Regular curve coefficient
+    fp2_add(&curve.A, &A24.x, &A24.x);
+    fp2_sub(&curve.A, &curve.A, &A24.z);
+    fp2_add(&curve.A, &curve.A, &curve.A);
+    fp2_copy(&curve.C, &A24.z);
+
+    ec_curve_to_implicit_basis_2_smart(&P, &Q, Pa);
+    swap_points(&P, &Q, -(digit_t)(swapPQ));
+
+    xMULv2(&Q, &Q, scalar, POWER_OF_2, &A24);
+    difference_point(&PQ, &P, &Q, &curve);
+    xADD(K, &P, &Q, &PQ);
+
+    for(int i = 0; i < P_LEN; i++){
+        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+            xMULdac(K, K, DACS[i], DAC_LEN[i], &A24);
+        }
+    }
+
+}
+
+void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const digit_t *scalar){
+
+    ec_point_t P,Q,PQ,A24;
+    ec_curve_t curve;
+
+    // A24 curve coefficient
+    ec_A24_from_mont_root(&A24, Pa);
+
+    // Regular curve coefficient
+    fp2_add(&curve.A, &A24.x, &A24.x);
+    fp2_sub(&curve.A, &curve.A, &A24.z);
+    fp2_add(&curve.A, &curve.A, &curve.A);
+    fp2_copy(&curve.C, &A24.z);
+
+    ec_curve_to_implicit_basis_2_smart(&P, &Q, Pa);
+
+    for(int i = 0; i < P_LEN; i++){
+        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+            xMULdac(&P, &P, DACS[i], DAC_LEN[i], &A24);
+            xMULdac(&Q, &Q, DACS[i], DAC_LEN[i], &A24);
+        }
+    }
+
+    for(int i = 0; i < POWER_OF_2 - POWER_OF_2_SECPAR; i++){
+        xDBLv2(&P, &P, &A24);
+        xDBLv2(&Q, &Q, &A24);
+    }
+
+    xMULv2(&Q, &Q, scalar, POWER_OF_2 - POWER_OF_2_SECPAR, &A24);
+    difference_point(&PQ, &P, &Q, &curve);
+    xADD(K, &P, &Q, &PQ);
+    copy_point(R, &Q);
 }

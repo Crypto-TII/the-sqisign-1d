@@ -86,6 +86,19 @@ void protocols_verif_unpack_chall(ec_curve_t *E2, ec_point_t *dual, const signat
 
 }
 
+void protocols_verif_unpack_chall_smart(ec_point_t *Pa, const signature_t *sig, const public_key_smart_t *pk)
+{
+    ec_point_t A24, K;
+
+    copy_point(Pa, &pk->Pa);
+
+    for(size_t i = 0; i < sig->zip.length; i++){
+        ec_scalar_to_kernel_smart(&K, Pa, sig->zip.zip_chain[i], (i == 0) & sig->zip.bit_first_step);
+        ec_A24_from_mont_root(&A24, Pa);
+        ec_eval_even_strategy_smart(Pa, &A24, &K);
+    }
+}
+
 int protocols_verif_from_chall(const signature_t *sig, ec_curve_t const *E2, const ec_point_t *dual, const unsigned char* m, size_t l)
 {   
 
@@ -204,6 +217,38 @@ assert(!fp2_is_zero(&push_points[0].z));
 }
 
 
+int protocols_verif_from_chall_smart(const signature_t *sig, ec_point_t const *Pa, const unsigned char* m, size_t l)
+{   
+    ec_point_t K, push_point, A24;
+    ec_curve_t E;
+
+    ec_A24_from_mont_root(&A24, Pa);
+
+    ec_scalar_to_kernel_secpar_smart(&K, &push_point, Pa, sig->s.scalar2);
+
+    ec_eval_even_strategy_chal(&E, &push_point, &A24, &K);
+
+assert(!fp2_is_zero(&E.C));
+
+    // Normalize curve
+    ec_curve_t E1;
+    ec_isom_t isom;
+    ec_curve_normalize(&E1, &isom, &E);
+    ec_iso_eval(&push_point, &isom);
+assert(!fp2_is_zero(&E1.C));
+
+    // Recover original challenge kernel point from the hash
+    hash_to_challenge_smart(&K, &E1, m, l);
+
+assert(!fp2_is_zero(&K.z));
+
+    // Multiply Q by r
+    ec_mul(&push_point, &E1, sig->r, &push_point);
+assert(!fp2_is_zero(&push_point.z));
+
+    return ec_is_equal(&K, &push_point);
+}
+
 /** @defgroup verification The verification protocol
  * @{
 */
@@ -227,3 +272,17 @@ int protocols_verif(const signature_t *sig, const public_key_t *pk, const unsign
     return protocols_verif_from_chall(sig, &E2, &dual, m, l);
 }
 
+/**
+ * @brief Verifying a signature with smart sampling and hashing
+ *
+ * @param sig: the signature
+ * @param pk the public key 
+ * @param m the message
+ * @returns a bit indicating if the verification succeeded  
+    */
+int protocols_verif_smart(const signature_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l)
+{
+    ec_point_t Pa;
+    protocols_verif_unpack_chall_smart(&Pa, sig, pk);
+    return protocols_verif_from_chall_smart(sig, &Pa, m, l);
+}

@@ -3,9 +3,9 @@
 #ifndef api_h
 #define api_h
 
-#define CRYPTO_SECRETKEYBYTES  782
+#define CRYPTO_SECRETKEYBYTES  802
 #define CRYPTO_PUBLICKEYBYTES   64
-#define CRYPTO_BYTES           177
+#define CRYPTO_BYTES           222
 
 #define CRYPTO_ALGNAME "lvl1_p248"
 

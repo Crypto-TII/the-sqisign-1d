@@ -28,6 +28,13 @@ FOREACH(SVARIANT ${SVARIANT_S})
         target_compile_definitions(sqisign_test_scheme_${SVARIANT} PUBLIC ENABLE_SIGN)
     endif()
 
+    if(NOT(${SVARIANT_LOWER} IN_LIST SVARIANTSIGN_S) )
+    add_executable(sqisign_bench_verif_kat_${SVARIANT}_smart bench_verif_kat.c)
+    target_link_libraries(sqisign_bench_verif_kat_${SVARIANT}_smart sqisign_${SVARIANT_LOWER})
+    target_include_directories(sqisign_bench_verif_kat_${SVARIANT}_smart PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
+    target_compile_definitions(sqisign_bench_verif_kat_${SVARIANT}_smart PRIVATE SMART_SIGNATURE)
+    endif()
+
     add_test(sqisign_${SVARIANT}_KAT sqisign_test_kat_${SVARIANT})
     if(ENABLE_SIGN AND ${SVARIANT_LOWER} IN_LIST SVARIANTSIGN_S)
         add_test(sqisign_${SVARIANT}_SELFTEST sqisign_test_scheme_${SVARIANT})

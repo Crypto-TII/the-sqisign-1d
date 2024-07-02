@@ -17,6 +17,32 @@ void ec_init(ec_point_t* P)
     fp_tomont(P->x.re, one);
 }
 
+void ec_mont_root(ec_point_t *P2, const ec_curve_t *curve){
+    fp2_t t0, t1;
+
+    // Normalize by C_conj
+    fp_copy(P2->z.re, curve->C.re);
+    fp_neg(P2->z.im, curve->C.im);
+    fp2_mul(&P2->x, &P2->z, &curve->A);
+    fp2_mul(&P2->z, &P2->z, &curve->C);
+
+    fp2_add(&P2->z, &P2->z, &P2->z);
+    fp2_add(&t0, &P2->x, &P2->z);
+    fp2_sub(&t1, &P2->x, &P2->z);
+    fp2_mul(&t0, &t0, &t1);
+    fp2_sqrt(&t0);
+    fp2_sub(&P2->x, &t0, &P2->x);
+}
+
+void ec_A24_from_mont_root(ec_point_t *A24, const ec_point_t *P2){
+    fp2_sub(&A24->x, &P2->x, &P2->z);
+    fp2_sqr(&A24->x, &A24->x);
+    fp2_neg(&A24->x, &A24->x);
+    fp2_mul(&A24->z, &P2->x, &P2->z);
+    fp2_add(&A24->z, &A24->z, &A24->z);
+    fp2_add(&A24->z, &A24->z, &A24->z);
+}
+
 void xDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* AC)
 {
     // This version computes the coefficient values A+2C and 4C on-the-fly 

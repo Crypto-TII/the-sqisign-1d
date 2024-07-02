@@ -55,6 +55,26 @@ int sqisign_open(unsigned char *m,
               unsigned long long *mlen, const unsigned char *sm,
               unsigned long long smlen, const unsigned char *pk);
 
+/**
+ * SQIsign open smart-sampling-based signature.
+ *
+ * The implementation performs SQIsign.verify() using various smart sampling optimizations,
+ * which are not compatible with the NIST round 1 KATs.
+ * If the signature verification succeeded, the original message is stored in m.
+ * Keys provided is a compact public key.
+ * The caller is responsible to allocate sufficient memory to hold m.
+ *
+ * @param[out] m Message stored if verification succeeds
+ * @param[out] mlen Pointer to the length of m
+ * @param[in] sm Signature concatenated with message
+ * @param[in] smlen Length of sm
+ * @param[in] pk Compacted public key
+ * @return int status code
+ */
+int sqisign_open_smart(unsigned char *m,
+              unsigned long long *mlen, const unsigned char *sm,
+              unsigned long long smlen, const unsigned char *pk);
+
 
 /**
  * SQIsign verify signature.
@@ -69,6 +89,24 @@ int sqisign_open(unsigned char *m,
  * @return int 0 if verification succeeded, 1 otherwise.
  */
 int sqisign_verify(const unsigned char *m,
+                unsigned long long mlen, const unsigned char *sig,
+                unsigned long long siglen, const unsigned char *pk);
+
+
+/**
+ * SQIsign verify signature, using smart sampling optimizations which are
+ * not compatible with the NIST round 1 KATs.
+ *
+ * If the signature verification succeeded, returns 0, otherwise 1.
+ *
+ * @param[out] m Message stored if verification succeeds
+ * @param[out] mlen Pointer to the length of m
+ * @param[in] sig Signature
+ * @param[in] siglen Length of sig
+ * @param[in] pk Compacted public key
+ * @return int 0 if verification succeeded, 1 otherwise.
+ */
+int sqisign_verify_smart(const unsigned char *m,
                 unsigned long long mlen, const unsigned char *sig,
                 unsigned long long siglen, const unsigned char *pk);
 

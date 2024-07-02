@@ -14,7 +14,6 @@ bool ec_is_zero(ec_point_t const* P);
 void copy_point(ec_point_t* P, ec_point_t const* Q);
 void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option);
 void ec_init(ec_point_t* P);
-void xDBLv2(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24);
 void xDBLADD(ec_point_t* R, ec_point_t* S, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24);
 void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, ec_curve_t const* curve);
 void xDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* AC);

@@ -218,6 +218,14 @@ void ec_add(ec_point_t* res, const ec_point_t* P, const ec_point_t* Q, const ec_
 void ec_dbl(ec_point_t* res, const ec_curve_t* curve, const ec_point_t* P);
 
 /**
+ * @brief Same as ec_dbl but takes the curve coefficient A24=(A+2C:4C)
+ *
+ * @param res computed double of P
+ * @param P a point
+ */
+void xDBLv2(ec_point_t* res, ec_point_t const* P, ec_point_t const* A24);
+
+/**
  * @brief Point multiplication
  *
  * @param res computed scalar * P
@@ -295,6 +303,15 @@ void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve,
  * @param P2 the projective non-zero root of the curve's equation (a.k.a. a point of order 2)
  */
 void ec_mont_root(ec_point_t *P2, const ec_curve_t *curve);
+
+/**
+ * @brief Given a non-zero root of the montgomery curve equation, recovers
+ * the curve coefficient in the form A24=(A+2C:4C)
+ *
+ * @param A24 computed curve
+ * @param P2 the projective non-zero root of the curve's equation (a.k.a. a point of order 2)
+ */
+void ec_A24_from_mont_root(ec_point_t *A24, const ec_point_t *P2);
 
 /** @}
 */
@@ -398,6 +415,27 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ,
  */
 void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length);
+    
+/**
+ * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1, and outputs only a non-(0,0) point of order 2 in the image.
+ *          WARNING: if f is odd, then this function only works if the kernel point is not over (0,0).
+ *
+ * @param Pa computed non-(0,0) point of order 2 in the image curve
+ * @param A24 the domain curve coefficient in the form (A+2C:4C)
+ * @param kernel a kernel generator of order 2^f (note the point must be of order 2^f even though the isogeny is only 2^(f-1)))
+ */
+    void ec_eval_even_strategy_smart(ec_point_t *Pa,
+    const ec_point_t* A24, const ec_point_t *kernel);
+/**
+ * @brief Evaluates an isogeny of degree 2^lambda while pushing a single point. Assumes that the kernel doesn't contain (0,0)
+ *
+ * @param image the codomain curve in the ( A : C) form
+ * @param push_point a point to be pusehd in-place
+ * @param A24 the domain curve coefficient in the form (A+2C:4C)
+ * @param kernel a kernel generator of order 2^lambda not over (0,0)
+ */
+void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
+    ec_point_t* A24, const ec_point_t *kernel);
 
 /**
  * @brief Evaluate isogeny of even degree on list of points, assuming the point (0,0) is not in the kernel
@@ -446,6 +484,39 @@ static inline void ec_eval_odd_basis(ec_curve_t* image, const ec_isog_odd_t* phi
     ec_basis_t* points, unsigned short length) {
     ec_eval_odd(image, phi, (ec_point_t*)points, sizeof(ec_basis_t) / sizeof(ec_point_t) * length);
 }
+
+/**
+ * @brief Generate an implicit 2^f-torsion basis using smart sampling.
+ *
+ * Not compatible with NIST round 1 KATs.
+ *
+ * @param P computed point of order a multiple of 2^f, not over (0,0)
+ * @param Q computed point of order a multiple of 2^f, over (0,0)
+ * @param Pa a non-(0,0) point of order 2 in the curve
+ */
+void ec_curve_to_implicit_basis_2_smart(ec_point_t *P, ec_point_t *Q, const ec_point_t *Pa);
+
+/**
+ * @brief All-in-one procedure to find an implicit basis with smart sampling and compute K = P + [scalar]*Q.
+ *
+ * @param K computed kernel point of order 2^f
+ * @param Pa a non-(0,0) point of order 2 in the curve
+ * @param scalar an unsigned multi-digit scalar
+ * @param swapPQ if true, computes Q + [scalar]*P instead of P + [scalar]*Q
+ */
+void ec_scalar_to_kernel_smart(ec_point_t *K, const ec_point_t *Pa, const digit_t *scalar, const bool swapPQ);
+
+/**
+ * @brief Same as ec_scalar_to_kernel_smart, but produces a point of order 2^lambda that is not over (0,0). Also returns
+ *      an auxiliary point of the same order that lays over (0,0).
+ *
+ * @param K computed kernel point of order 2^lambda
+ * @param R computer point of order 2^lambda not in the kernel
+ * @param Pa a non-(0,0) point of order 2 in the curve
+ * @param scalar an unsigned multi-digit scalar
+ * @param swapPQ if true, computes Q + [scalar]*P instead of P + [scalar]*Q
+ */
+void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const digit_t *scalar);
 
 /** @}
 */

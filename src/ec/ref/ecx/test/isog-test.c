@@ -132,7 +132,9 @@ static void xeval_2_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ)
 
 int main(int argc, char* argv[])
 {
-    unsigned long long cycles, cycles1, cycles2;
+    unsigned long long cycles, cycles_smart, cycles1, cycles2;
+	cycles = 0;
+	cycles_smart = 0;
 
 	// ----------------- TEST FOR BASIS GENERATION ----------------- //
 	if (argc > 1) {
@@ -159,12 +161,60 @@ int main(int argc, char* argv[])
     	fp2_add(&A24.x, &E.A, &A24.z);
     	fp2_add(&A24.z, &A24.z, &A24.z);
 
+		// Curve coefficient A3=(A+2C:A-2C)
+		ec_point_t A3;
+		fp2_copy(&A3.x, &A24.x);
+		fp2_sub(&A3.z, &A3.x, &A24.z);
+
 		fp2_t j;
 		ec_j_inv(&j, &E);
 
-		// Construct basis for 2^f torsion
+		// Check the smart basis sampling for 2^f torsion
+		ec_point_t Pa;
 		ec_basis_t B2;
+		ec_mont_root(&Pa, &E);
+        cycles1 = cpucycles(); 
+		ec_curve_to_implicit_basis_2_smart(&B2.P, &B2.Q, &Pa);
+        cycles2 = cpucycles(); 
+		cycles_smart += cycles2 - cycles1;
+
+		// Check that basis is rational
+		assert(ec_is_on_curve(&E, &B2.P));
+		assert(ec_is_on_curve(&E, &B2.Q));
+
+	    // Clear cofactors
+	    for(int i = 0; i < POWER_OF_3; i++){
+	        xTPL(&B2.P, &B2.P, &A3);
+	        xTPL(&B2.Q, &B2.Q, &A3);
+	    }
+	    for(int i = (POWER_OF_3 > 0) & 1; i < P_LEN; i++){
+	        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+	            xMULdac(&B2.P, &B2.P, DACS[i], DAC_LEN[i], &A24);
+	            xMULdac(&B2.Q, &B2.Q, DACS[i], DAC_LEN[i], &A24);
+	        }
+	    }
+
+		// Check the order
+		ec_point_t P2, Q2;
+		copy_point(&P2, &B2.P);
+		copy_point(&Q2, &B2.Q);
+		for(int i = 0; i < POWER_OF_2 - 1; i++){
+			xDBLv2(&P2, &P2, &A24);
+			assert(!ec_is_zero(&P2));
+			xDBLv2(&Q2, &Q2, &A24);
+			assert(!ec_is_zero(&Q2));
+		}
+		assert(fp2_is_zero(&Q2.x));
+		xDBLv2(&P2, &P2, &A24);
+		assert(ec_is_zero(&P2));
+		xDBLv2(&Q2, &Q2, &A24);
+		assert(ec_is_zero(&Q2));
+
+		// Check regular basis for 2^f torsion
+        cycles1 = cpucycles(); 
 		ec_curve_to_basis_2(&B2, &E);
+        cycles2 = cpucycles(); 
+		cycles += cycles2 - cycles1;
 
 		// Check that basis is rational
 		assert(ec_is_on_curve(&E, &B2.P));
@@ -176,7 +226,7 @@ int main(int argc, char* argv[])
 		xADD(&PpQ, &B2.P, &B2.Q, &B2.PmQ);
 
 		// Check the order
-		ec_point_t P2, Q2, PmQ2, PpQ2, R;
+		ec_point_t PmQ2, PpQ2, R;
 		copy_point(&P2, &B2.P);
 		copy_point(&Q2, &B2.Q);
 		copy_point(&PmQ2, &B2.PmQ);
@@ -282,11 +332,6 @@ int main(int argc, char* argv[])
 		assert(ec_is_zero(&PmQ2));
 		xDBLv2(&PpQ2, &PpQ2, &A24);
 		assert(ec_is_zero(&PpQ2));
-
-		// Curve coefficient A3=(A+2C:A-2C)
-		ec_point_t A3;
-		fp2_copy(&A3.x, &A24.x);
-		fp2_sub(&A3.z, &A3.x, &A24.z);
 
 #if POWER_OF_3 > 0
 		// Construct basis for 3^g torsion
@@ -443,7 +488,8 @@ int main(int argc, char* argv[])
 		isog.length = POWER_OF_2;
 		ec_eval_even_nonzero(&E, &isog, &B2.P, 1);
 	}
-	printf("[%2d%%] Tested basis generation:\t\tNo errors!\n", 100);
+	printf("[%2d%%] Tested basis generation:\t\tNo errors! (normal: %7lld cycles, smart: %7lld cycles)\n", 100, cycles/TEST_LOOPS, cycles_smart/TEST_LOOPS);\
+	
 	
 
 

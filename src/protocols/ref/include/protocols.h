@@ -52,7 +52,7 @@ typedef struct signature {
     } s;                                    /// second scalar encoding the challenge
 } signature_t;
 
-/** @brief Type for the public keys
+/** @brief Type for the regular public keys
  * 
  * @typedef public_key_t
  * 
@@ -62,6 +62,17 @@ typedef struct signature {
 typedef struct public_key {
 	ec_curve_t E; /// the normalized A coefficient of the Montgomery curve
 } public_key_t;
+
+/** @brief Type for the smart-sampling-based public keys
+ * 
+ * @typedef public_key_t
+ * 
+ * @struct public_key
+ * 
+*/
+typedef struct public_key_smart {
+	ec_point_t Pa; /// A non-(0,0) point of order 2 in the public curve
+} public_key_smart_t;
 
 #if defined(ENABLE_SIGN)
 /** @brief Type for the secret keys
@@ -147,6 +158,17 @@ orsion basis of the commitment curve
  */
 void hash_to_challenge(digit_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, size_t length);
 
+/**
+ * @brief Hashing a commitment curve and a message directly to a kernel point.
+ *          Not compatible with NIST round 1 KATs
+ *
+ * @param output: the computed kernel point
+ * @param curve: the commitment curve
+ * @param message: byte string to be signed
+ * @param length: length of the message
+ */
+void hash_to_challenge_smart(ec_point_t *output, const ec_curve_t *curve, const unsigned char *message, size_t length);
+
 
 #if defined(ENABLE_SIGN)
 /**
@@ -223,6 +245,17 @@ int protocols_verif_from_chall(const signature_t *sig, ec_curve_t const *E2, con
     */
 int protocols_verif(const signature_t *sig,const public_key_t *pk,const unsigned char* m, size_t l);
 
+/**
+ * @brief Verifying a smart-sampling-based signature
+ *
+ * @param sig: the signature
+ * @param pk the public key 
+ * @param m the message
+ * @param l length of the message
+ * @returns a bit indicating if the verification succeeded  
+    */
+int protocols_verif_smart(const signature_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l);
+
 
 /** @}
 */
@@ -242,6 +275,14 @@ int protocols_verif(const signature_t *sig,const public_key_t *pk,const unsigned
  * @param pk : public key
     */
 void public_key_encode(unsigned char *enc, const public_key_t* pk);
+
+/**
+ * @brief Encodes a smart-smapling-based public key as a byte array
+ *
+ * @param enc : Output the encoded public key
+ * @param pk : public key
+    */
+void public_key_encode_smart(unsigned char *enc, const public_key_smart_t* pk);
 
 #if defined(ENABLE_SIGN)
 /**
@@ -263,12 +304,28 @@ void secret_key_encode(unsigned char *enc, const secret_key_t* sk, const public_
 void signature_encode(unsigned char* enc, const signature_t* sig);
 
 /**
- * @brief Encodes a public key as a byte array
+ * @brief Encodes a smart-sampling-based signature as a byte array
+ *
+ * @param enc : Output the encoded signature
+ * @param sig : signature
+    */
+void signature_encode_smart(unsigned char* enc, const signature_t* sig);
+
+/**
+ * @brief Decodes a public key from a byte array
  *
  * @param pk : Output the decoded public key
  * @param enc : encoded public key
     */
 void public_key_decode(public_key_t* pk, const unsigned char *enc);
+
+/**
+ * @brief Decodes a smart-sampling-based public key from a byte array
+ *
+ * @param pk : Output the decoded public key
+ * @param enc : encoded public key
+    */
+void public_key_decode_smart(public_key_smart_t* pk, const unsigned char *enc);
 
 #if defined(ENABLE_SIGN)
 /**
@@ -282,12 +339,20 @@ void secret_key_decode(secret_key_t* sk, public_key_t* pk, const unsigned char *
 #endif
 
 /**
- * @brief Encodes a signature as a byte array
+ * @brief Decodes a signature from a byte array
  *
  * @param sig : Output the decoded signature
  * @param enc : encoded signature
     */
 void signature_decode(signature_t* sig, const unsigned char* enc);
+
+/**
+ * @brief Decodes a smart-sampling-based signature from a byte array
+ *
+ * @param sig : Output the decoded signature
+ * @param enc : encoded signature
+    */
+void signature_decode_smart(signature_t* sig, const unsigned char* enc);
 
 /** @}
 */

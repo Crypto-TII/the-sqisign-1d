@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <sig.h>
 #include <api.h>
+#include <encoded_sizes.h>
 
 #if defined(TARGET_OS_UNIX) && (defined(TARGET_ARM) || defined(TARGET_ARM64) || defined(TARGET_OTHER))
 #include <time.h>
@@ -20,7 +21,12 @@
 #define LIST_SIZE    10000
 
 #define MSG_LEN_MAX       3300    // greater or equal to the maximum value of mlen in kat file
-#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + CRYPTO_BYTES)
+
+#ifdef SMART_SIGNATURE
+#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SMART_SIGNATURE_LEN)
+#else
+#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SIGNATURE_LEN)
+#endif
 
 #if (defined(TARGET_ARM) || defined(TARGET_ARM64) || defined(TARGET_S390X))
 #define BENCH_UNITS "nsec"
@@ -110,7 +116,11 @@ static int bench_sig(int runs, int csv)
 
     printf("Benchmarking %s\n", CRYPTO_ALGNAME);
 
+#ifdef SMART_SIGNATURE
+    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#else
     sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#endif
 
     if ((fp_rsp = fopen(fn_rsp, "r")) == NULL) {
         printf("Couldn't open <%s> for read\n", fn_rsp);
@@ -166,7 +176,11 @@ static int bench_sig(int runs, int csv)
     smlen = smlen_data;
 
     BENCH_CODE_1(count);
+#ifdef SMART_SIGNATURE
+        sqisign_open_smart(m, &mlen, sm, *smlen, pk);
+#else
         sqisign_open(m, &mlen, sm, *smlen, pk);
+#endif
         pk += CRYPTO_PUBLICKEYBYTES;
         sm += SIGMSG_LEN_MAX;
         smlen++;

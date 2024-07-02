@@ -15,6 +15,12 @@ logp = ceil(log(p, 2))
 tors2part = (p+1).p_primary_part(2)
 tors3part = (p+1).p_primary_part(3)
 
+# Degree of the challenge isogeny
+if(lvl == 1 ): secpar = 128 
+elif(lvl == 3 ): secpar = 192 
+elif(lvl == 5 ): secpar = 256 
+else: raise NotImplementedError(f'security level {lvl} not found')
+
 #XXX first load the constants from klpt_constants.h
 import re
 klpt_consts = dict()
@@ -43,6 +49,7 @@ defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES'] = (f + 7) // 8
 defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] = defs['ZIP_CHAIN_LEN'] * defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES'] + 1
 
 defs['SIGNATURE_LEN'] = defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] + ((tors2part*tors3part).bit_length()+7)//8 + 1 + (tors2part.bit_length()+7)//8 + (tors3part.bit_length()+7)//8
+defs['SMART_SIGNATURE_LEN'] = defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] + secpar//8 + secpar//8
 defs['PUBLICKEY_BYTES'] = defs['EC_CURVE_ENCODED_BYTES']
 defs['SECRETKEY_BYTES'] = defs['EC_CURVE_ENCODED_BYTES'] + 5*defs['QUAT_ALG_ELEM_ENCODED_BYTES'] + defs['EC_POINT_ENCODED_BYTES'] + defs['EC_BASIS_ENCODED_BYTES'] + defs['EC_BASIS_ENCODED_BYTES']
 
