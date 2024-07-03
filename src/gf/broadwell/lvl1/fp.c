@@ -1,7 +1,6 @@
 #include <assert.h>
 #include "include/fp.h"
 
-#define PRECISION 254
 #ifdef RADIX_32
 const digit_t p[NWORDS_FIELD] =  { 0xffffffff, 0xffffffff, 0x355147FF, 0x252C9E49, 0x87407437, 0x33A6A865, 0x6B95D98C, 0x34E29E28 };
 const digit_t R2[NWORDS_FIELD] = { 0x400674D4, 0x233625AE, 0x025A1C2E, 0x20AFD6C1, 0x0920655D, 0x30A841AB, 0x7C30CD3D, 0x0D72E7D6 };
@@ -198,7 +197,7 @@ void _fp_inv(digit_t* a)
     fp_mul(a, t, a);    // a^(p-2)
 }
 
-#include "../../inversion.inc"
+#include "../../generic/inversion.inc"
 
 bool _fp_is_square(const digit_t* a)
 { // Is field element a square?
@@ -214,7 +213,7 @@ bool _fp_is_square(const digit_t* a)
     return fp_is_equal(t, one);
 }
 
-#include "../../symbol.inc"
+#include "../../generic/symbol.inc"
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p

@@ -122,7 +122,7 @@ void fp_inv(digit_t* a) {
 	sidig_t m[4], d = -1;
 	/* Compute number of iterations based on modulus size. */
 	/* Iterations taken directly from https://github.com/sipa/safegcd-bounds */
-	const int iterations = (45907 * PRECISION + 26313) / 19929;
+	const int iterations = (45907 * LOG2P + 26313) / 19929;
 	int loops, i, j = 0, s = RADIX - 2;
 	fp_t t, u0, u1, v0, v1, p01, p11;
 	digit_t t0[NWORDS_FIELD + 1], t1[NWORDS_FIELD + 1];
