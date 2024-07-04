@@ -21,7 +21,7 @@ if (NOT DEFINED SQISIGN_BUILD_TYPE)
 endif()
 
 if(SQISIGN_BUILD_TYPE STREQUAL "broadwell")
-	set(SVARIANT_S "lvl1")
+	set(SVARIANT_S "lvl1;lvl1_p248")
 	set(SVARIANTSIGN_S "lvl1")
 	add_compile_definitions(ARITH_BROADWELL)
 elseif(SQISIGN_BUILD_TYPE STREQUAL "mike")

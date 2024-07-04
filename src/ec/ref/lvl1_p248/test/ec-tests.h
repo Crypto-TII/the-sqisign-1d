@@ -27,7 +27,9 @@ bool ec_test()
     digit_t k[NWORDS_ORDER] = {0}, l[NWORDS_ORDER] = {0};
 
     printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
-    printf("Testing ecc functions: \n\n"); 
+    printf("Testing ecc functions: \n\n");
+
+    fp2_mul(&S.x, &S.x, &S.z);
 
     return OK;
 }
