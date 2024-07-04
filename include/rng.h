@@ -3,6 +3,8 @@
 #ifndef rng_h
 #define rng_h
 
+#include <stddef.h>
+
 /**
  * Randombytes initialization.
  * Initialization may be needed for some random number generators (e.g. CTR-DRBG).

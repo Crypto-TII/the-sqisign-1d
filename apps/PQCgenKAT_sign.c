@@ -265,7 +265,7 @@ int ReadHex(FILE *infile, unsigned char *A, int Length, char *str) {
   return 1;
 }
 
-void fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L) {
+void fprintBstr(FILE *fp, char *S, unsigned char *A, size_t L) {
   unsigned long long i;
 
   fprintf(fp, "%s", S);
