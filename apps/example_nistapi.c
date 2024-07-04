@@ -20,8 +20,8 @@
  */
 static int example_sqisign(void) {
 
-    unsigned long long msglen = 32;
-    unsigned long long smlen = CRYPTO_BYTES + msglen;
+    size_t msglen = 32;
+    size_t smlen = CRYPTO_BYTES + msglen;
 
     unsigned char *pk  = calloc(CRYPTO_PUBLICKEYBYTES, 1);
     unsigned char *sk  = calloc(CRYPTO_SECRETKEYBYTES, 1);

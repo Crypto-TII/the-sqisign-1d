@@ -3406,31 +3406,31 @@ const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFFFFFFFFFF, 0x4C6174C1FFFFFFFF, 0xC72
 //const digit_t pp[NWORDS_FIELD] = { 0x0000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 };
 const digit_t pre[NWORDS_FIELD] = { 0x46BE935C6F50EA0C, 0x0F49EF66039F81BE, 0x014B6829344C76DC, 0x93D2ABAD109E2E0B, 0xDD07D4B62C849F87, 0x5351137AF42530 };
 
-void fp_add(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_add(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p47441_add(out, a, b);
 }
 
-void fp_sub(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_sub(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p47441_sub(out, a, b);
 }
 
-void fp_sqr(uint64_t* out, const uint64_t* a) {
+void fp_sqr(digit_t* out, const digit_t* a) {
     fiat_p47441_square(out, a);
 }
 
-void fp_mul(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p47441_mul(out, a, b);
 }
 
-void fp_tomont(uint64_t* out, const uint64_t* a) {
+void fp_tomont(digit_t* out, const digit_t* a) {
     fiat_p47441_to_montgomery(out, a);
 }
 
-void fp_frommont(uint64_t* out, const uint64_t* a) {
+void fp_frommont(digit_t* out, const digit_t* a) {
     fiat_p47441_from_montgomery(out, a);
 }
 
-void fp_mont_setone(uint64_t* out) {
+void fp_mont_setone(digit_t* out) {
     fiat_p47441_set_one(out);
 }
 

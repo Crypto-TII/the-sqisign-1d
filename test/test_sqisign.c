@@ -41,7 +41,7 @@ static int test_sqisign() {
 
     unsigned char seed[48] = { 0 };
     unsigned char msg[32] = { 0 };
-    unsigned long long msglen = 32;
+    size_t msglen = 32;
 
     randombytes_init(seed, NULL, 256);
 
@@ -57,7 +57,7 @@ static int test_sqisign() {
     VALGRIND_MAKE_MEM_DEFINED(pk, CRYPTO_PUBLICKEYBYTES);
 #endif
 
-    unsigned long long smlen = CRYPTO_BYTES + 32;
+    size_t smlen = CRYPTO_BYTES + 32;
 
     res = sqisign_sign(sig, &smlen, msg, 32, sk);
     if (res != 0) {

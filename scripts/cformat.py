@@ -140,7 +140,9 @@ class ObjectFormatterMArith(ObjectFormatter):
         print('#if 0', file=file)
         for sz in (16, 32, 64):
             print(f'#elif 8*DIGIT_LEN == {sz}', file=file)
-            if sz != 16:
+            if sz == 32:
+                print(f'#if defined(ARITH_REF) || defined (ARITH_M4) || defined(ARITH_BROADWELL)', file=file)            
+            elif sz == 64:
                 print(f'#if defined(ARITH_REF) || defined(ARITH_BROADWELL)', file=file)            
             for obj in self.objs:
                 assert isinstance(obj, Object)

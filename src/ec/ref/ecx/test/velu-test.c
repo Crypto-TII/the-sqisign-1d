@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
 
 	for(i = 0; i < P_LEN+M_LEN; i++){
 		if (TORSION_ODD_PRIMES[i] > gap)
-			printf("[\033[0;31m%7" PRId "\033[0m] (#I: %ld, #J: %ld, #K: %ld) \t KPS: %7lld cycles \t xISOG: %7lld cycles \t xEVAL: %7lld cycles\n", TORSION_ODD_PRIMES[i], sizeI[i], sizeJ[i], sizeK[i], cycles_KPS[i]/reps, cycles_xISOG[i]/reps, cycles_xEVAL[i]/reps);
+			printf("[\033[0;31m%7" PRId "\033[0m] (#I: %lld, #J: %lld, #K: %lld) \t KPS: %7lld cycles \t xISOG: %7lld cycles \t xEVAL: %7lld cycles\n", TORSION_ODD_PRIMES[i], sizeI[i], sizeJ[i], sizeK[i], cycles_KPS[i]/reps, cycles_xISOG[i]/reps, cycles_xEVAL[i]/reps);
 		else
 			printf("[\033[0;31m%7" PRId "\033[0m] --------------------------- \t KPS: %7lld cycles \t xISOG: %7lld cycles \t xEVAL: %7lld cycles\n", TORSION_ODD_PRIMES[i], cycles_KPS[i]/reps, cycles_xISOG[i]/reps, cycles_xEVAL[i]/reps);
 	}

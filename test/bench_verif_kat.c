@@ -108,7 +108,7 @@ static int cmpfunc(const void *a, const void *b)
 static int bench_sig(int runs, int csv)
 {
     unsigned char *pk_data, *sm_data, *pk, *sm, m[MSG_LEN_MAX];
-    unsigned long long mlen, *smlen, *smlen_data;
+    size_t mlen, *smlen, *smlen_data;
     int count, i;
     int64_t cycles, cycles1, cycles2, cycles_list[LIST_SIZE];;
     char fn_rsp[64];
@@ -133,7 +133,7 @@ static int bench_sig(int runs, int csv)
     /* Buffers for public keys and signatures + messages */
     pk_data = calloc(runs * CRYPTO_PUBLICKEYBYTES, 1);
     sm_data = calloc(runs * SIGMSG_LEN_MAX, 1);
-    smlen_data = calloc(runs, sizeof(unsigned long long));
+    smlen_data = calloc(runs, sizeof(size_t));
 
     /* Read data from kat */
     pk = pk_data;
@@ -154,7 +154,7 @@ static int bench_sig(int runs, int csv)
         }
 
         if (FindMarker(fp_rsp, "smlen = ")) {
-            i = fscanf(fp_rsp, "%lld", smlen);
+            i = fscanf(fp_rsp, "%zd", smlen);
         } else {
             printf("ERROR: unable to read 'smlen' from <%s>\n", fn_rsp);
             return KAT_DATA_ERROR;

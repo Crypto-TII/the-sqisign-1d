@@ -1,9 +1,7 @@
-#ifdef RADIX_32
+#if defined(RADIX_32) || defined(PQM4)
 
 #include <stdint.h>
 #include <stdio.h>
-
-#include <x86intrin.h>
 
 #include <stdbool.h>
 #include <fp.h>

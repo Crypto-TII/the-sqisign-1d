@@ -3,6 +3,7 @@
 #ifndef SQISIGN_H
 #define SQISIGN_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(ENABLE_SIGN)
@@ -33,8 +34,8 @@ int sqisign_keypair(unsigned char *pk, unsigned char *sk);
  * @return int status code
  */
 int sqisign_sign(unsigned char *sm,
-              unsigned long long *smlen, const unsigned char *m,
-              unsigned long long mlen, const unsigned char *sk);
+              size_t *smlen, const unsigned char *m,
+              size_t mlen, const unsigned char *sk);
 #endif
 
 /**
@@ -52,9 +53,8 @@ int sqisign_sign(unsigned char *sm,
  * @return int status code
  */
 int sqisign_open(unsigned char *m,
-              unsigned long long *mlen, const unsigned char *sm,
-              unsigned long long smlen, const unsigned char *pk);
-
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk);
 /**
  * SQIsign open smart-sampling-based signature.
  *
@@ -72,8 +72,8 @@ int sqisign_open(unsigned char *m,
  * @return int status code
  */
 int sqisign_open_smart(unsigned char *m,
-              unsigned long long *mlen, const unsigned char *sm,
-              unsigned long long smlen, const unsigned char *pk);
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk);
 
 
 /**
@@ -89,9 +89,8 @@ int sqisign_open_smart(unsigned char *m,
  * @return int 0 if verification succeeded, 1 otherwise.
  */
 int sqisign_verify(const unsigned char *m,
-                unsigned long long mlen, const unsigned char *sig,
-                unsigned long long siglen, const unsigned char *pk);
-
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk);
 
 /**
  * SQIsign verify signature, using smart sampling optimizations which are
@@ -107,7 +106,7 @@ int sqisign_verify(const unsigned char *m,
  * @return int 0 if verification succeeded, 1 otherwise.
  */
 int sqisign_verify_smart(const unsigned char *m,
-                unsigned long long mlen, const unsigned char *sig,
-                unsigned long long siglen, const unsigned char *pk);
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk);
 
 #endif

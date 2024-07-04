@@ -154,7 +154,11 @@ void _fp_inv(digit_t* a)
     fp_mul(a, t, a);    // a^(p-2)
 }
 
+#if defined(PQM4)
+#include "inversion.inc"
+#else
 #include "../../generic/inversion.inc"
+#endif
 
 bool _fp_is_square(const digit_t* a)
 { // Is field element a square?
@@ -170,7 +174,11 @@ bool _fp_is_square(const digit_t* a)
     return fp_is_equal(t, one);
 }
 
+#if defined(PQM4)
+#include "symbol.inc"
+#else
 #include "../../generic/symbol.inc"
+#endif
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p

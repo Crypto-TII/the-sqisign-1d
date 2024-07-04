@@ -37,19 +37,19 @@ int main(int argc, char *argv[]) {
 
 
 static int test_sig_kat(int cnt) {
-    unsigned char       seed[48];
-    unsigned char       *m, *sm, *m1, *sm_rsp;
-    unsigned long long  mlen, smlen, mlen1;
-    int                 count;
-    int                 done;
-    unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
-    int                 ret_val;
+    unsigned char seed[48];
+    unsigned char *m, *sm, *m1, *sm_rsp;
+    size_t        mlen, smlen, mlen1;
+    int           count;
+    int           done;
+    unsigned char pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
+    int           ret_val;
 
-    char                fn_rsp[64];
-    FILE                *fp_rsp;
-    unsigned char       pk_rsp[CRYPTO_PUBLICKEYBYTES], sk_rsp[CRYPTO_SECRETKEYBYTES];
+    char          fn_rsp[64];
+    FILE          *fp_rsp;
+    unsigned char pk_rsp[CRYPTO_PUBLICKEYBYTES], sk_rsp[CRYPTO_SECRETKEYBYTES];
 
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
     if ( (fp_rsp = fopen(fn_rsp, "r")) == NULL ) {
         printf("Couldn't open <%s> for read\n", fn_rsp);
         return KAT_FILE_OPEN_ERROR;
@@ -77,7 +77,7 @@ static int test_sig_kat(int cnt) {
 #endif
 
         if ( FindMarker(fp_rsp, "mlen = ") ) {
-            ret_val = fscanf(fp_rsp, "%lld", &mlen);
+            ret_val = fscanf(fp_rsp, "%zu", &mlen);
         } else {
             printf("ERROR: unable to read 'mlen' from <%s>\n", fn_rsp);
             return KAT_DATA_ERROR;
@@ -127,7 +127,7 @@ static int test_sig_kat(int cnt) {
         }
 #else
         if ( FindMarker(fp_rsp, "smlen = ") ) {
-            ret_val = fscanf(fp_rsp, "%lld", &smlen);
+            ret_val = fscanf(fp_rsp, "%zu", &smlen);
         } else {
             printf("ERROR: unable to read 'smlen' from <%s>\n", fn_rsp);
             return KAT_DATA_ERROR;
@@ -157,7 +157,7 @@ static int test_sig_kat(int cnt) {
 #endif
 
         if ( mlen != mlen1 ) {
-            printf("crypto_sign_open returned bad 'mlen': Got <%lld>, expected <%lld>\n", mlen1, mlen);
+            printf("crypto_sign_open returned bad 'mlen': Got <%zu>, expected <%zu>\n", mlen1, mlen);
             return KAT_CRYPTO_FAILURE;
         }
 

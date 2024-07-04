@@ -5,11 +5,11 @@
 
 #include <stddef.h>
 
-#define CRYPTO_SECRETKEYBYTES 1509
-#define CRYPTO_PUBLICKEYBYTES  128
-#define CRYPTO_BYTES           335
+#define CRYPTO_SECRETKEYBYTES  802
+#define CRYPTO_PUBLICKEYBYTES   64
+#define CRYPTO_BYTES           188
 
-#define CRYPTO_ALGNAME "lvl5"
+#define CRYPTO_ALGNAME "lvl1_p248_smart"
 
 #if defined(ENABLE_SIGN) || defined(PQM4)
 int

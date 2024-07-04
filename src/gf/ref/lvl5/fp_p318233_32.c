@@ -1,4 +1,4 @@
-#ifdef RADIX_32
+#if defined(RADIX_32) || defined(PQM4)
 
 #include <fp.h>
 
@@ -19378,31 +19378,31 @@ const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFF
 //const digit_t pp[NWORDS_FIELD] = { 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 const digit_t pre[NWORDS_FIELD] = { 0x9EE85D1D, 0x640F3267, 0x77C81AF6, 0xFE228DB5, 0x1CF87CD4, 0x7CED1891, 0x5D69292E, 0xD6C85A4E, 0x14D3B0BF, 0xEE632C35, 0x719A2FAD, 0xA3B39266, 0xE267D0B9, 0x01E72F81, 0x65541D1A, 0x3EADA };
 
-void fp_add(uint32_t* out, const uint32_t* a, const uint32_t* b) {
+void fp_add(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p318233_add(out, a, b);
 }
 
-void fp_sub(uint32_t* out, const uint32_t* a, const uint32_t* b) {
+void fp_sub(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p318233_sub(out, a, b);
 }
 
-void fp_sqr(uint32_t* out, const uint32_t* a) {
+void fp_sqr(digit_t* out, const digit_t* a) {
     fiat_p318233_square(out, a);
 }
 
-void fp_mul(uint32_t* out, const uint32_t* a, const uint32_t* b) {
+void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p318233_mul(out, a, b);
 }
 
-void fp_tomont(uint32_t* out, const uint32_t* a) {
+void fp_tomont(digit_t* out, const digit_t* a) {
     fiat_p318233_to_montgomery(out, a);
 }
 
-void fp_frommont(uint32_t* out, const uint32_t* a) {
+void fp_frommont(digit_t* out, const digit_t* a) {
     fiat_p318233_from_montgomery(out, a);
 }
 
-void fp_mont_setone(uint32_t* out) {
+void fp_mont_setone(digit_t* out) {
     fiat_p318233_set_one(out);
 }
 

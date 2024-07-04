@@ -45,7 +45,10 @@ with open('include/fp_constants.h', 'w') as hfile:
         if RADIX == 16:
             print(f'#define NWORDS_FIELD {ceil(log(p,2**RADIX))}',file=hfile)
         else:
-            print(f'#if defined(ARITH_REF) || defined(ARITH_BROADWELL)', file=hfile)
+            if RADIX == 32:
+                print(f'#if defined(ARITH_REF) || defined (ARITH_M4) || defined(ARITH_BROADWELL)', file=hfile)
+            else:
+                print(f'#if defined(ARITH_REF) || defined(ARITH_BROADWELL)', file=hfile)
             print(f'#define NWORDS_FIELD {ceil(log(p,2**RADIX))}',file=hfile)
             print(f'#elif defined(ARITH_MIKE)', file=hfile)
             print(f'#define NWORDS_FIELD {ceil(log(p,2**radix_map[RADIX]))}',file=hfile)

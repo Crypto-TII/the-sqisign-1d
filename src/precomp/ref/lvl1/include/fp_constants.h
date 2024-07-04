@@ -9,7 +9,7 @@
 
 #elif 8*DIGIT_LEN == 32
 
-#if defined(ARITH_REF) || defined(ARITH_BROADWELL)
+#if defined(ARITH_REF) || defined(ARITH_M4) || defined(ARITH_BROADWELL)
 #define NWORDS_FIELD 8
 #elif defined(ARITH_MIKE)
 #define NWORDS_FIELD 9

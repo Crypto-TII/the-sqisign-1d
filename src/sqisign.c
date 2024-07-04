@@ -17,8 +17,8 @@ int sqisign_keypair(unsigned char *pk, unsigned char *sk) {
 }
 
 int sqisign_sign(unsigned char *sm,
-              unsigned long long *smlen, const unsigned char *m,
-              unsigned long long mlen, const unsigned char *sk) {
+              size_t *smlen, const unsigned char *m,
+              size_t mlen, const unsigned char *sk) {
     int ret = 0;
     secret_key_t skt;
     public_key_t pkt = { 0 };
@@ -40,8 +40,8 @@ int sqisign_sign(unsigned char *sm,
 #endif
 
 int sqisign_open(unsigned char *m,
-              unsigned long long *mlen, const unsigned char *sm,
-              unsigned long long smlen, const unsigned char *pk) { 
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk) { 
     int ret = 0;
     public_key_t pkt = { 0 };
     signature_t sigt;
@@ -62,8 +62,8 @@ int sqisign_open(unsigned char *m,
 }
 
 int sqisign_open_smart(unsigned char *m,
-              unsigned long long *mlen, const unsigned char *sm,
-              unsigned long long smlen, const unsigned char *pk) { 
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk) { 
     int ret = 0;
     public_key_smart_t pkt = { 0 };
     signature_t sigt;
@@ -84,8 +84,8 @@ int sqisign_open_smart(unsigned char *m,
 }
 
 int sqisign_verify(const unsigned char *m,
-                unsigned long long mlen, const unsigned char *sig,
-                unsigned long long siglen, const unsigned char *pk) {
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk) {
 
     int ret = 0;
     public_key_t pkt = { 0 };
@@ -102,8 +102,8 @@ int sqisign_verify(const unsigned char *m,
 }
 
 int sqisign_verify_smart(const unsigned char *m,
-                unsigned long long mlen, const unsigned char *sig,
-                unsigned long long siglen, const unsigned char *pk) {
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk) {
 
     int ret = 0;
     public_key_smart_t pkt = { 0 };

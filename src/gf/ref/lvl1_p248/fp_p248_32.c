@@ -1,4 +1,4 @@
-#ifdef RADIX_32
+#if defined(RADIX_32) || defined(PQM4)
 
 #include <fp.h>
 
@@ -5689,31 +5689,31 @@ const digit_t p[NWORDS_FIELD] =  { 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffff
 //const digit_t pp[NWORDS_FIELD] = { 0x00000001, 0x00000000, 00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 const digit_t pre[NWORDS_FIELD] = { 0xd441b778, 0x86b4b5bd, 0x69c1878d, 0xbea87c37, 0x34ef11ef, 0xba9109a9, 0xdd00b817, 0x00efabb8 };
 
-void fp_add(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_add(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p248_add(out, a, b);
 }
 
-void fp_sub(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_sub(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p248_sub(out, a, b);
 }
 
-void fp_sqr(uint64_t* out, const uint64_t* a) {
+void fp_sqr(digit_t* out, const digit_t* a) {
     fiat_p248_square(out, a);
 }
 
-void fp_mul(uint64_t* out, const uint64_t* a, const uint64_t* b) {
+void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     fiat_p248_mul(out, a, b);
 }
 
-void fp_tomont(uint64_t* out, const uint64_t* a) {
+void fp_tomont(digit_t* out, const digit_t* a) {
     fiat_p248_to_montgomery(out, a);
 }
 
-void fp_frommont(uint64_t* out, const uint64_t* a) {
+void fp_frommont(digit_t* out, const digit_t* a) {
     fiat_p248_from_montgomery(out, a);
 }
 
-void fp_mont_setone(uint64_t* out) {
+void fp_mont_setone(digit_t* out) {
     fiat_p248_set_one(out);
 }
 #endif

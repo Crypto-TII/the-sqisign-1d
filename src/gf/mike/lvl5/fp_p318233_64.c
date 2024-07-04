@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <x86intrin.h>
-
 #include <stdbool.h>
 #include <fp.h>
 
