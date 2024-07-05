@@ -43,6 +43,7 @@ defs['CHAIN_LENGTH'] = klpt_consts['SQISIGN_keygen_length']
 defs['QUAT_ALG_ELEM_ENCODED_BITS'] = ceil(((logp/4) + klpt_consts['KLPT_keygen_length'])/2  +55)  #TODO FIXME figure this out XXX XXX
 defs['QUAT_ALG_ELEM_ENCODED_BYTES'] = (defs['QUAT_ALG_ELEM_ENCODED_BITS'] + 7)//8
 defs['ID2ISO_LONG_TWO_ISOG_ENCODED_BYTES'] = defs['CHAIN_LENGTH'] * (defs['EC_CURVE_ENCODED_BYTES'] + defs['EC_POINT_ENCODED_BYTES'] + 2)
+defs['UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES'] = defs['CHAIN_LENGTH'] * defs['EC_POINT_ENCODED_BYTES']
 
 defs['ZIP_CHAIN_LEN'] = klpt_consts['SQISIGN_signing_length']
 defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_ZIP_CHAIN_BYTES'] = (f + 7) // 8
@@ -50,6 +51,7 @@ defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] = defs['ZIP_CHAIN_LEN'] * defs['ID
 
 defs['SIGNATURE_LEN'] = defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] + ((tors2part*tors3part).bit_length()+7)//8 + 1 + (tors2part.bit_length()+7)//8 + (tors3part.bit_length()+7)//8
 defs['SMART_SIGNATURE_LEN'] = defs['ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES'] + secpar//8 + secpar//8
+defs['UNCOMPRESSED_SIGNATURE_LEN'] = defs['UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES'] + defs['EC_CURVE_ENCODED_BYTES']
 defs['PUBLICKEY_BYTES'] = defs['EC_CURVE_ENCODED_BYTES']
 defs['SECRETKEY_BYTES'] = defs['EC_CURVE_ENCODED_BYTES'] + 5*defs['QUAT_ALG_ELEM_ENCODED_BYTES'] + defs['EC_POINT_ENCODED_BYTES'] + defs['EC_BASIS_ENCODED_BYTES'] + defs['EC_BASIS_ENCODED_BYTES']
 

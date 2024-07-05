@@ -99,6 +99,27 @@ void protocols_verif_unpack_chall_smart(ec_point_t *Pa, const signature_t *sig, 
     }
 }
 
+void protocols_verif_unpack_chall_uncompressed(ec_point_t *jinv, ec_point_t *jprev, const signature_uncompressed_t *sig, const public_key_t *pk)
+{
+    // Import the public key curve in (A+2C:4C) form
+    ec_point_t A24;
+    fp2_add(&A24.z, &pk->E.C, &pk->E.C);
+    fp2_add(&A24.x, &pk->E.A, &A24.z);
+    fp2_add(&A24.z, &A24.z, &A24.z);
+    
+    for (int i = 0; i < ZIP_CHAIN_LEN; i++)
+        ec_eval_even_strategy_uncompressed(&A24, jprev, &A24, &sig->kernel_points[i]);
+
+    // Challenge curve in (A:C) form
+    ec_curve_t E;
+    fp2_add(&E.A, &A24.x, &A24.x);
+    fp2_sub(&E.A, &E.A, &A24.z);
+    fp2_add(&E.C, &A24.z, &A24.z);
+
+    // j invariant
+    ec_j_inv_proj(jinv, &E);
+}
+
 int protocols_verif_from_chall(const signature_t *sig, ec_curve_t const *E2, const ec_point_t *dual, const unsigned char* m, size_t l)
 {   
 
@@ -249,6 +270,23 @@ assert(!fp2_is_zero(&push_point.z));
     return ec_is_equal(&K, &push_point);
 }
 
+
+int protocols_verif_from_chall_uncompressed(const signature_uncompressed_t *sig, ec_point_t const *jinv, ec_point_t const *jprev, const unsigned char* m, size_t l)
+{   
+    // Compute the challenge isogeny
+    ec_point_t Kchal, B24, j2, j2prev;
+    ec_curve_t B;
+    hash_to_challenge_smart(&Kchal, &sig->E_COM, m, l);
+    fp2_add(&B24.z, &sig->E_COM.C, &sig->E_COM.C);
+    fp2_add(&B24.x, &sig->E_COM.A, &B24.z);
+    fp2_add(&B24.z, &B24.z, &B24.z);
+    ec_eval_even_strategy_chal_uncompressed(&B, &j2prev, &B24, &Kchal);
+    ec_j_inv_proj(&j2, &B);
+
+    // Check that second-to-last j-invariants are different but last j-invariants are the same
+    return(!ec_is_equal(jprev, &j2prev) && ec_is_equal(jinv, &j2));
+}
+
 /** @defgroup verification The verification protocol
  * @{
 */
@@ -285,4 +323,11 @@ int protocols_verif_smart(const signature_t *sig, const public_key_smart_t *pk, 
     ec_point_t Pa;
     protocols_verif_unpack_chall_smart(&Pa, sig, pk);
     return protocols_verif_from_chall_smart(sig, &Pa, m, l);
+}
+
+int protocols_verif_uncompressed(const signature_uncompressed_t *sig, const public_key_t *pk, const unsigned char* m, size_t l)
+{
+    ec_point_t jinv, jprev;
+    protocols_verif_unpack_chall_uncompressed(&jinv, &jprev, sig, pk);
+    return protocols_verif_from_chall_uncompressed(sig, &jinv, &jprev, m, l);
 }

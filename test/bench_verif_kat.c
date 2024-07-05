@@ -22,8 +22,10 @@
 
 #define MSG_LEN_MAX       3300    // greater or equal to the maximum value of mlen in kat file
 
-#ifdef SMART_SIGNATURE
+#if defined(SMART_SIGNATURE)
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SMART_SIGNATURE_LEN)
+#elif defined(UNCOMPRESSED_SIGNATURE)
+#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + UNCOMPRESSED_SIGNATURE_LEN)
 #else
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SIGNATURE_LEN)
 #endif
@@ -116,9 +118,14 @@ static int bench_sig(int runs, int csv)
 
     printf("Benchmarking %s\n", CRYPTO_ALGNAME);
 
-#ifdef SMART_SIGNATURE
+#if defined(SMART_SIGNATURE)
+    printf("Using smart signatures.\n");
     sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#elif defined(UNCOMPRESSED_SIGNATURE)
+    printf("Using uncompressed signatures.\n");
+    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #else
+    printf("Using regular signatures.\n");
     sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #endif
 
@@ -176,8 +183,10 @@ static int bench_sig(int runs, int csv)
     smlen = smlen_data;
 
     BENCH_CODE_1(count);
-#ifdef SMART_SIGNATURE
+#if defined(SMART_SIGNATURE)
         sqisign_open_smart(m, &mlen, sm, *smlen, pk);
+#elif defined(UNCOMPRESSED_SIGNATURE)
+        sqisign_open_uncompressed(m, &mlen, sm, *smlen, pk);
 #else
         sqisign_open(m, &mlen, sm, *smlen, pk);
 #endif

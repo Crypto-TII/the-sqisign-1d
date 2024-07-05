@@ -120,12 +120,20 @@ typedef struct ec_isom_t {
 */
 
 /**
- * @brief j-invariant.
+ * @brief j-invariant in affine form.
  *
  * @param j_inv computed j_invariant
  * @param curve input curve
  */
 void ec_j_inv(fp2_t* j_inv, const ec_curve_t* curve);
+
+/**
+ * @brief j-invariant in projective form.
+ *
+ * @param j_inv computed j_invariant
+ * @param curve input curve
+ */
+void ec_j_inv_proj(ec_point_t* j_inv, const ec_curve_t* curve);
 
 /**
  * @brief Isomorphism of elliptic curve
@@ -426,6 +434,18 @@ void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
  */
     void ec_eval_even_strategy_smart(ec_point_t *Pa,
     const ec_point_t* A24, const ec_point_t *kernel);
+
+/**
+ * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1, evaluating the
+ * A24 = (A+2C:4C) coefficient and also the j invariant of the second-to-last curve in the chain
+ *
+ * @param A24out computed codomain curve coefficient in the form (A+2C:4C)
+ * @param A24in the domain curve coefficient in the form (A+2C:4C)
+ * @param second_to_last_j_inv computed projective j-invariant of the second-to-last curve in the chain
+ * @param kernel a kernel generator of order 2^(f-1)
+ */
+void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_to_last_j_inv, ec_point_t* A24in, const ec_point_t *kernel);
+
 /**
  * @brief Evaluates an isogeny of degree 2^lambda while pushing a single point. Assumes that the kernel doesn't contain (0,0)
  *
@@ -436,6 +456,17 @@ void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
  */
 void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
     ec_point_t* A24, const ec_point_t *kernel);
+
+/**
+ * @brief Same as ec_eval_even_strategy_chal but doesn't push a point and instead stores the j invariant
+ * of the second-to-last curve in the chain.
+ *
+ * @param image computed codomain curve in the ( A : C) form
+ * @param second_to_last_j_inv computed projective j-invariant of the second-to-last curve in the chain
+ * @param A24 the domain curve coefficient in the form (A+2C:4C)
+ * @param kernel a kernel generator of order 2^lambda not over (0,0)
+ */
+void ec_eval_even_strategy_chal_uncompressed(ec_curve_t* image, ec_point_t* second_to_last_j_inv, const ec_point_t* A24, const ec_point_t *kernel);
 
 /**
  * @brief Evaluate isogeny of even degree on list of points, assuming the point (0,0) is not in the kernel

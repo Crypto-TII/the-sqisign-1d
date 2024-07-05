@@ -52,6 +52,11 @@ typedef struct signature {
     } s;                                    /// second scalar encoding the challenge
 } signature_t;
 
+typedef struct signature_uncompressed {
+    ec_point_t kernel_points[ZIP_CHAIN_LEN]; // x coordinate for the generator of each block of the response isogeny
+    ec_curve_t E_COM; // Montgomery coefficient of the commitment curve
+} signature_uncompressed_t;
+
 /** @brief Type for the regular public keys
  * 
  * @typedef public_key_t
@@ -256,6 +261,17 @@ int protocols_verif(const signature_t *sig,const public_key_t *pk,const unsigned
     */
 int protocols_verif_smart(const signature_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l);
 
+/**
+ * @brief Verifying a signature with uncompressed points
+ *
+ * @param sig: the signature
+ * @param pk the public key 
+ * @param m the message
+ * @param l length of the message
+ * @returns a bit indicating if the verification succeeded  
+    */
+int protocols_verif_uncompressed(const signature_uncompressed_t *sig, const public_key_t *pk, const unsigned char* m, size_t l);
+
 
 /** @}
 */
@@ -312,6 +328,14 @@ void signature_encode(unsigned char* enc, const signature_t* sig);
 void signature_encode_smart(unsigned char* enc, const signature_t* sig);
 
 /**
+ * @brief Encodes a signature as a byte array with uncompressed points
+ *
+ * @param enc : Output the encoded signature
+ * @param sig : signature
+    */
+void signature_encode_uncompressed(unsigned char* enc, const signature_uncompressed_t* sig);
+
+/**
  * @brief Decodes a public key from a byte array
  *
  * @param pk : Output the decoded public key
@@ -353,6 +377,14 @@ void signature_decode(signature_t* sig, const unsigned char* enc);
  * @param enc : encoded signature
     */
 void signature_decode_smart(signature_t* sig, const unsigned char* enc);
+
+/**
+ * @brief Decodes a signature withh uncompressed points from a byte array
+ *
+ * @param sig : Output the decoded signature
+ * @param enc : encoded signature
+    */
+void signature_decode_uncompressed(signature_uncompressed_t* sig, const unsigned char* enc);
 
 /** @}
 */

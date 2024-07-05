@@ -83,6 +83,26 @@ int sqisign_open_smart(unsigned char *m,
     return ret;
 }
 
+int sqisign_open_uncompressed(unsigned char *m,
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk) { 
+    int ret = 0;
+    public_key_t pkt = { 0 };
+    signature_uncompressed_t sigt;
+
+    public_key_decode(&pkt, pk);
+    signature_decode_uncompressed(&sigt, sm);
+
+    ret = !protocols_verif_uncompressed(&sigt, &pkt, sm + UNCOMPRESSED_SIGNATURE_LEN, smlen - UNCOMPRESSED_SIGNATURE_LEN);
+
+    if (!ret) {
+        *mlen = smlen - UNCOMPRESSED_SIGNATURE_LEN;
+        memmove(m, sm + UNCOMPRESSED_SIGNATURE_LEN, *mlen);
+    }
+
+    return ret;
+}
+
 int sqisign_verify(const unsigned char *m,
                 size_t mlen, const unsigned char *sig,
                 size_t siglen, const unsigned char *pk) {
@@ -116,6 +136,21 @@ int sqisign_verify_smart(const unsigned char *m,
     ret = !protocols_verif_smart(&sigt, &pkt, m, mlen);
 
     signature_finalize(&sigt);
+    return ret;
+}
+
+int sqisign_verify_uncompressed(const unsigned char *m,
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk) {
+
+    int ret = 0;
+    public_key_t pkt = { 0 };
+    signature_uncompressed_t sigt;
+
+    public_key_decode(&pkt, pk);
+    signature_decode_uncompressed(&sigt, sig);
+
+    ret = !protocols_verif_uncompressed(&sigt, &pkt, m, mlen);
     return ret;
 }
 

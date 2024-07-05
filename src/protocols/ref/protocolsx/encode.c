@@ -263,6 +263,28 @@ const unsigned char *const start = enc;
 assert(enc - start == ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES);
 }
 
+// uncompressed isogeny chains
+
+static void uncompressed_long_two_isog_encode(const ec_point_t* kernel_points, unsigned char *enc)
+{
+unsigned char *const start = enc;
+    for (int i = 0; i < ZIP_CHAIN_LEN; ++i) {
+        ec_point_encode(enc, &kernel_points[i]);
+        enc += EC_POINT_ENCODED_BYTES;
+    }
+assert(enc - start == UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES);
+}
+
+static void uncompressed_long_two_isog_decode(const unsigned char *enc, ec_point_t* kernel_points)
+{
+    const unsigned char *const start = enc;
+    for (int i = 0; i < ZIP_CHAIN_LEN; ++i) {
+        ec_point_decode(&kernel_points[i], enc);
+        enc += EC_POINT_ENCODED_BYTES;
+    }
+assert(enc - start == UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES);
+}
+
 
 // public API
 
@@ -475,6 +497,22 @@ assert(enc - start == SMART_SIGNATURE_LEN);
 }
 
 /**
+ * @brief Encodes a signature to a byte array with uncompressed points
+ *
+ * @param enc Output: encoded signature
+ * @param sig: the signature
+ */
+void signature_encode_uncompressed(unsigned char* enc, const signature_uncompressed_t* sig)
+{
+unsigned char *const start = enc;
+    uncompressed_long_two_isog_encode(sig->kernel_points, enc);
+    enc += UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES;
+    ec_curve_encode(&sig->E_COM, enc);
+    enc += EC_CURVE_ENCODED_BYTES;
+assert(enc - start == UNCOMPRESSED_SIGNATURE_LEN);
+}
+
+/**
  * @brief Decodes a smart-sampling-based signature from a byte array
  *
  * @param sig Output: the decoded signature
@@ -492,6 +530,23 @@ const unsigned char *const start = enc;
     decode_digits(sig->s.scalar2, enc, POWER_OF_2_SECPAR/8, sizeof(sig->s.scalar2)/sizeof(*sig->s.scalar2));
     enc += POWER_OF_2_SECPAR/8;
 assert(enc - start == SMART_SIGNATURE_LEN);
+}
+
+/**
+ * @brief Decodes a signature with uncompressed points from a byte array
+ *
+ * @param sig Output: the decoded signature
+ * @param enc: encoded signature
+ */
+void signature_decode_uncompressed(signature_uncompressed_t* sig, const unsigned char* enc)
+{
+const unsigned char *const start = enc;
+    uncompressed_long_two_isog_decode(enc, sig->kernel_points);
+    enc += UNCOMPRESSED_LONG_TWO_ISOG_ENCODED_BYTES;
+    memset(&sig->E_COM, 0, sizeof(ec_point_t));
+    ec_curve_decode(enc, &sig->E_COM);
+    enc += EC_CURVE_ENCODED_BYTES;
+assert(enc - start == UNCOMPRESSED_SIGNATURE_LEN);
 }
 
 

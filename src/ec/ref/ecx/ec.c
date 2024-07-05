@@ -480,24 +480,30 @@ void ec_ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point
 
 void ec_j_inv(fp2_t* j_inv, const ec_curve_t* curve){
     /* j-invariant computation for montgommery coefficient A2=(A+2C:4C) */
+    ec_point_t j_inv_proj;
+    ec_j_inv_proj(&j_inv_proj, curve);
+    fp2_inv(&j_inv_proj.z);
+    fp2_mul(j_inv, &j_inv_proj.x, &j_inv_proj.z);  
+}
+
+void ec_j_inv_proj(ec_point_t* j_inv, const ec_curve_t* curve){
+    /* j-invariant computation for montgommery coefficient A2=(A+2C:4C) */
     fp2_t t0, t1;
     
     fp2_sqr(&t1, &curve->C);
-    fp2_sqr(j_inv, &curve->A);
-    fp2_add(&t0, &t1, &t1);
-    fp2_sub(&t0, j_inv, &t0);
-    fp2_sub(&t0, &t0, &t1);
-    fp2_sub(j_inv, &t0, &t1);
-    fp2_sqr(&t1, &t1);
-    fp2_mul(j_inv, j_inv, &t1);
+    fp2_sqr(&j_inv->z, &curve->A);
+    fp2_add(&t0, &t1, &t1);//2C^2
+    fp2_sub(&t0, &j_inv->z, &t0);//A^2-2C^2
+    fp2_sub(&t0, &t0, &t1);//A^2-3C^2
+    fp2_sub(&j_inv->z, &t0, &t1);//A^2-4C^2
+    fp2_sqr(&t1, &t1);//C^4
+    fp2_mul(&j_inv->z, &j_inv->z, &t1);//C^4(A^2-4C^2)
     fp2_add(&t0, &t0, &t0);
+    fp2_add(&t0, &t0, &t0);//4(A^2-3C^2)
+    fp2_sqr(&t1, &t0);//16(A^2-3C^2)^2
+    fp2_mul(&t0, &t0, &t1);//64(A^2-3C^2)^3
     fp2_add(&t0, &t0, &t0);
-    fp2_sqr(&t1, &t0);
-    fp2_mul(&t0, &t0, &t1);
-    fp2_add(&t0, &t0, &t0);
-    fp2_add(&t0, &t0, &t0);
-    fp2_inv(j_inv);
-    fp2_mul(j_inv, &t0, j_inv);    
+    fp2_add(&j_inv->x, &t0, &t0);//256(A^2-3C^2)^3
 }
 
 static void jac_init(jac_point_t* P)
