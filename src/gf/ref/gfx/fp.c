@@ -116,11 +116,8 @@ void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords)
     }
 }
 
-static void fp_exp3div4(digit_t* out, const digit_t* a)
-{ // Fixed exponentiation out = a^((p-3)/4) mod p
-  // Input: a in [0, p-1] 
-  // Output: out in [0, p-1] 
-  // Requirement: p = 3(mod 4)
+void fp_exp3div4(digit_t* out, const digit_t* a)
+{ 
     fp_t p_t, acc;
     digit_t bit;
 

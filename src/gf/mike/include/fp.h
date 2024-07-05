@@ -23,6 +23,7 @@ void fp_neg(digit_t* out, const digit_t* a);
 void fp_sqr(digit_t* out, const digit_t* a);
 void fp_mul(digit_t* out, const digit_t* a, const digit_t* b);
 void MUL(digit_t* out, const digit_t a, const digit_t b);
+void fp_exp3div4(digit_t* out, const digit_t* a);
 void fp_inv(digit_t* x);
 bool fp_is_square(const digit_t* a);
 void fp_sqrt(digit_t* a);
