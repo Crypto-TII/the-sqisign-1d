@@ -49,7 +49,17 @@ static int test_sig_kat(int cnt) {
     FILE          *fp_rsp;
     unsigned char pk_rsp[CRYPTO_PUBLICKEYBYTES], sk_rsp[CRYPTO_SECRETKEYBYTES];
 
-    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#if defined(SMART_SIGNATURE)
+    printf("Using smart signatures.\n");
+    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#elif defined(UNCOMPRESSED_SIGNATURE)
+    printf("Using uncompressed signatures.\n");
+    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#else
+    printf("Using regular signatures.\n");
+    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#endif
+
     if ( (fp_rsp = fopen(fn_rsp, "r")) == NULL ) {
         printf("Couldn't open <%s> for read\n", fn_rsp);
         return KAT_FILE_OPEN_ERROR;
@@ -150,7 +160,14 @@ static int test_sig_kat(int cnt) {
             return KAT_CRYPTO_FAILURE;
         }
 #else
-        if ( (ret_val = sqisign_open(m1, &mlen1, sm_rsp, smlen, pk_rsp)) != 0) {
+#if defined(SMART_SIGNATURE)
+        ret_val = sqisign_open_smart(m1, &mlen1, sm_rsp, smlen, pk_rsp);
+#elif defined(UNCOMPRESSED_SIGNATURE)
+        ret_val = sqisign_open_uncompressed(m1, &mlen1, sm_rsp, smlen, pk_rsp);
+#else
+        ret_val = sqisign_open(m1, &mlen1, sm_rsp, smlen, pk_rsp);
+#endif
+        if ( ret_val != 0 ) {
             printf("crypto_sign_open returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }

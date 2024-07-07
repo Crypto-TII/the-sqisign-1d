@@ -627,9 +627,9 @@ void hash_to_challenge_smart(ec_point_t *output, const ec_curve_t *curve, const 
     while(1)
     {
         shake256_inc_init(&ctx);
-        shake256_inc_absorb(&ctx, &ctr, 1);
         shake256_inc_absorb(&ctx, buf, FP2_ENCODED_BYTES);
         shake256_inc_absorb(&ctx, message, length);
+        shake256_inc_absorb(&ctx, &ctr, 1);
         shake256_inc_finalize(&ctx);
         shake256_inc_squeeze((void *) scalar, NWORDS_ORDER * sizeof(digit_t), &ctx);
 

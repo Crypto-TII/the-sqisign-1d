@@ -449,6 +449,25 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
 }
 
+void ec_ladder3ptv2(ec_point_t *R, const digit_t* m, const digit_t mbits, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A24)
+{
+
+	ec_point_t X0, X1, X2;
+	copy_point(&X0, Q);
+	copy_point(&X1, P);
+	copy_point(&X2, PQ);
+
+	int i;
+    digit_t t;
+	for (i = 0; i < mbits; i++)
+	{
+        swap_points(&X1, &X2, -(digit_t)(((m[i>>LOG2RADIX]>>(i & (RADIX-1))) & 1) == 0));
+        xDBLADD(&X0, &X1, &X0, &X1, &X2, A24);
+        swap_points(&X1, &X2, -(digit_t)(((m[i>>LOG2RADIX]>>(i & (RADIX-1))) & 1) == 0));
+	};
+	copy_point(R, &X1);
+}
+
 void ec_ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
 {
     // Curve constant in the form A24=(A+2C:4C)

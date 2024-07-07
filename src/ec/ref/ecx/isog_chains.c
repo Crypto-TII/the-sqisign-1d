@@ -118,8 +118,8 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     A24_to_AC(image, A24);
 }
 
-void ec_eval_even_strategy_smart(ec_point_t *Pa,
-    const ec_point_t* A24, const ec_point_t *kernel){
+void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
+    const ec_point_t* A24in, const ec_point_t *kernel){
         
     uint8_t log2_of_e, tmp;
     fp2_t t0;
@@ -129,7 +129,7 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa,
 
     ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24;
     copy_point(&SPLITTING_POINTS[0], kernel);
-    copy_point(&B24, A24);
+    copy_point(&B24, A24in);
 
     int strategy = 0,    // Current element of the strategy to be used
     i, j;
@@ -167,7 +167,7 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa,
         // Evaluate 4-isogeny
         if((j == 0) && !(POWER_OF_2 & 1)){ // if this is the first isogeny we need to check that it is not over (0,0)
             xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
-            if(ec_is_zero(&K2)){
+            if(fp2_is_zero(&K2.x)){
                 xisog_4_singular(&B24, SPLITTING_POINTS[current], B24);
                 xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
             }
@@ -188,6 +188,7 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa,
 
     // Final 4-isogeny replaced by a 2-isogeny only
     xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
+    xisog_2(A24out, K2);
     xeval_2(Pa, &SPLITTING_POINTS[current], 1);
 }
 

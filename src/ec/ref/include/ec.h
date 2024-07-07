@@ -290,6 +290,19 @@ void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3);
 void ec_ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A);
 
 /**
+ * @brief Same as ec_ladder3pt nut takes the A24 = (A+2C:4C) coefficient and is optimize for a given scalar bitlength
+ *
+ * @param R computed P + m * Q
+ * @param A24 the curve coeffcient in (A+2C:4C) form
+ * @param m an unsigned multi-precision integer
+ * @param mbits the bitlength of m
+ * @param P a point
+ * @param Q a point
+ * @param PQ the difference P-Q
+ */
+void ec_ladder3ptv2(ec_point_t *R, const digit_t* m, const digit_t mbits, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A24);
+
+/**
  * @brief Linear combination of points of a basis
  *
  * @param res computed scalarP * P + scalarQ * Q
@@ -425,15 +438,17 @@ void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length);
     
 /**
- * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1, and outputs only a non-(0,0) point of order 2 in the image.
+ * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1,
+ *          and outputs the codomain curve and a non-(0,0) point of order 2 in the image.
  *          WARNING: if f is odd, then this function only works if the kernel point is not over (0,0).
  *
  * @param Pa computed non-(0,0) point of order 2 in the image curve
- * @param A24 the domain curve coefficient in the form (A+2C:4C)
+ * @param A24out the computed image curve coefficient in the form (A+2C:4C)
+ * @param A24in the domain curve coefficient in the form (A+2C:4C)
  * @param kernel a kernel generator of order 2^f (note the point must be of order 2^f even though the isogeny is only 2^(f-1)))
  */
-    void ec_eval_even_strategy_smart(ec_point_t *Pa,
-    const ec_point_t* A24, const ec_point_t *kernel);
+    void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
+    const ec_point_t* A24in, const ec_point_t *kernel);
 
 /**
  * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1, evaluating the
@@ -544,10 +559,11 @@ void ec_scalar_to_kernel_smart(ec_point_t *K, const ec_point_t *Pa, const digit_
  * @param K computed kernel point of order 2^lambda
  * @param R computer point of order 2^lambda not in the kernel
  * @param Pa a non-(0,0) point of order 2 in the curve
+ * @param A24 the curve coefficient in (A+2C:4C) form
  * @param scalar an unsigned multi-digit scalar
  * @param swapPQ if true, computes Q + [scalar]*P instead of P + [scalar]*Q
  */
-void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const digit_t *scalar);
+void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const ec_point_t *A24, const digit_t *scalar);
 
 /** @}
 */

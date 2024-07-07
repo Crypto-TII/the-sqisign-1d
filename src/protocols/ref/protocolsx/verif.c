@@ -21,6 +21,15 @@ static void fp2_print(char *name, fp2_t const a){
     printf("\n");
 }
 
+static inline void A24_to_AC(ec_curve_t *E, ec_point_t const *A24)
+{
+    // (A:C) = ((A+2C)*2-4C : 4C)
+    fp2_add(&E->A, &A24->x, &A24->x);
+    fp2_sub(&E->A, &E->A, &A24->z);
+    fp2_add(&E->A, &E->A, &E->A);
+    fp2_copy(&E->C, &A24->z);
+}
+
 static void curve_print(char *name, ec_curve_t E){
     fp2_t a;
     fp2_copy(&a, &E.C);
@@ -86,16 +95,16 @@ void protocols_verif_unpack_chall(ec_curve_t *E2, ec_point_t *dual, const signat
 
 }
 
-void protocols_verif_unpack_chall_smart(ec_point_t *Pa, const signature_t *sig, const public_key_smart_t *pk)
+void protocols_verif_unpack_chall_smart(ec_point_t *Pa, ec_point_t *A24, const signature_t *sig, const public_key_smart_t *pk)
 {
-    ec_point_t A24, K;
+    ec_point_t K;
 
     copy_point(Pa, &pk->Pa);
+    ec_A24_from_mont_root(A24, Pa);
 
     for(size_t i = 0; i < sig->zip.length; i++){
-        ec_scalar_to_kernel_smart(&K, Pa, sig->zip.zip_chain[i], (i == 0) & sig->zip.bit_first_step);
-        ec_A24_from_mont_root(&A24, Pa);
-        ec_eval_even_strategy_smart(Pa, &A24, &K);
+        ec_scalar_to_kernel_smart(&K, Pa, sig->zip.zip_chain[i], (i == 0) & (1 - sig->zip.bit_first_step));
+        ec_eval_even_strategy_smart(Pa, A24, A24, &K);
     }
 }
 
@@ -238,16 +247,14 @@ assert(!fp2_is_zero(&push_points[0].z));
 }
 
 
-int protocols_verif_from_chall_smart(const signature_t *sig, ec_point_t const *Pa, const unsigned char* m, size_t l)
+int protocols_verif_from_chall_smart(const signature_t *sig, ec_point_t const *Pa, ec_point_t *A24, const unsigned char* m, size_t l)
 {   
-    ec_point_t K, push_point, A24;
+    ec_point_t K, push_point;
     ec_curve_t E;
 
-    ec_A24_from_mont_root(&A24, Pa);
+    ec_scalar_to_kernel_secpar_smart(&K, &push_point, Pa, A24, sig->s.scalar2);
 
-    ec_scalar_to_kernel_secpar_smart(&K, &push_point, Pa, sig->s.scalar2);
-
-    ec_eval_even_strategy_chal(&E, &push_point, &A24, &K);
+    ec_eval_even_strategy_chal(&E, &push_point, A24, &K);
 
 assert(!fp2_is_zero(&E.C));
 
@@ -320,9 +327,9 @@ int protocols_verif(const signature_t *sig, const public_key_t *pk, const unsign
     */
 int protocols_verif_smart(const signature_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l)
 {
-    ec_point_t Pa;
-    protocols_verif_unpack_chall_smart(&Pa, sig, pk);
-    return protocols_verif_from_chall_smart(sig, &Pa, m, l);
+    ec_point_t Pa, A24;
+    protocols_verif_unpack_chall_smart(&Pa, &A24, sig, pk);
+    return protocols_verif_from_chall_smart(sig, &Pa, &A24, m, l);
 }
 
 int protocols_verif_uncompressed(const signature_uncompressed_t *sig, const public_key_t *pk, const unsigned char* m, size_t l)

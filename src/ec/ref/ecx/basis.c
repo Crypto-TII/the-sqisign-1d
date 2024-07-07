@@ -694,34 +694,7 @@ void ec_scalar_to_kernel_smart(ec_point_t *K, const ec_point_t *Pa, const digit_
     ec_curve_to_implicit_basis_2_smart(&P, &Q, Pa);
     swap_points(&P, &Q, -(digit_t)(swapPQ));
 
-    xMULv2(&Q, &Q, scalar, POWER_OF_2, &A24);
-    difference_point(&PQ, &P, &Q, &curve);
-    xADD(K, &P, &Q, &PQ);
-
-    for(int i = 0; i < P_LEN; i++){
-        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
-            xMULdac(K, K, DACS[i], DAC_LEN[i], &A24);
-        }
-    }
-
-}
-
-void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const digit_t *scalar){
-
-    ec_point_t P,Q,PQ,A24;
-    ec_curve_t curve;
-
-    // A24 curve coefficient
-    ec_A24_from_mont_root(&A24, Pa);
-
-    // Regular curve coefficient
-    fp2_add(&curve.A, &A24.x, &A24.x);
-    fp2_sub(&curve.A, &curve.A, &A24.z);
-    fp2_add(&curve.A, &curve.A, &curve.A);
-    fp2_copy(&curve.C, &A24.z);
-
-    ec_curve_to_implicit_basis_2_smart(&P, &Q, Pa);
-
+    // Note: we could do a single xMUL after the ladder
     for(int i = 0; i < P_LEN; i++){
         for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
             xMULdac(&P, &P, DACS[i], DAC_LEN[i], &A24);
@@ -729,13 +702,36 @@ void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_poi
         }
     }
 
-    for(int i = 0; i < POWER_OF_2 - POWER_OF_2_SECPAR; i++){
-        xDBLv2(&P, &P, &A24);
-        xDBLv2(&Q, &Q, &A24);
+    difference_point(&PQ, &P, &Q, &curve);
+    ec_ladder3ptv2(K, scalar, POWER_OF_2, &P, &Q, &PQ, &A24);
+}
+
+void ec_scalar_to_kernel_secpar_smart(ec_point_t *K, ec_point_t *R, const ec_point_t *Pa, const ec_point_t *A24, const digit_t *scalar){
+
+    ec_point_t P,Q,PQ;
+    ec_curve_t curve;
+
+    // Regular curve coefficient
+    fp2_add(&curve.A, &A24->x, &A24->x);
+    fp2_sub(&curve.A, &curve.A, &A24->z);
+    fp2_add(&curve.A, &curve.A, &curve.A);
+    fp2_copy(&curve.C, &A24->z);
+
+    ec_curve_to_implicit_basis_2_smart(&P, &Q, Pa);
+
+    for(int i = 0; i < P_LEN; i++){
+        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+            xMULdac(&P, &P, DACS[i], DAC_LEN[i], A24);
+            xMULdac(&Q, &Q, DACS[i], DAC_LEN[i], A24);
+        }
     }
 
-    xMULv2(&Q, &Q, scalar, POWER_OF_2 - POWER_OF_2_SECPAR, &A24);
-    difference_point(&PQ, &P, &Q, &curve);
-    xADD(K, &P, &Q, &PQ);
     copy_point(R, &Q);
+    difference_point(&PQ, &P, &Q, &curve);
+    ec_ladder3ptv2(K, scalar, POWER_OF_2_SECPAR, &P, &Q, &PQ, A24);
+
+    for(int i = 0; i < POWER_OF_2 - POWER_OF_2_SECPAR; i++){
+        xDBLv2(K, K, A24);
+        xDBLv2(R, R, A24);
+    }
 }
