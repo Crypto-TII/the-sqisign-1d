@@ -115,15 +115,17 @@ void protocols_verif_unpack_chall_uncompressed(ec_point_t *jinv, ec_point_t *jpr
     fp2_add(&A24.z, &pk->E.C, &pk->E.C);
     fp2_add(&A24.x, &pk->E.A, &A24.z);
     fp2_add(&A24.z, &A24.z, &A24.z);
-    
-    for (int i = 0; i < ZIP_CHAIN_LEN; i++)
+
+    for (int i = 0; i < ZIP_CHAIN_LEN; i++){
         ec_eval_even_strategy_uncompressed(&A24, jprev, &A24, &sig->kernel_points[i]);
+    }
 
     // Challenge curve in (A:C) form
     ec_curve_t E;
     fp2_add(&E.A, &A24.x, &A24.x);
     fp2_sub(&E.A, &E.A, &A24.z);
-    fp2_add(&E.C, &A24.z, &A24.z);
+    fp2_add(&E.A, &E.A, &E.A);
+    fp2_copy(&E.C, &A24.z);
 
     // j invariant
     ec_j_inv_proj(jinv, &E);
@@ -290,7 +292,7 @@ int protocols_verif_from_chall_uncompressed(const signature_uncompressed_t *sig,
     ec_eval_even_strategy_chal_uncompressed(&B, &j2prev, &B24, &Kchal);
     ec_j_inv_proj(&j2, &B);
 
-    // Check that second-to-last j-invariants are different but last j-invariants are the same
+    // Check that second-to-last j-invariants are different (cyclicity check) but last j-invariants are the same
     return(!ec_is_equal(jprev, &j2prev) && ec_is_equal(jinv, &j2));
 }
 
@@ -373,7 +375,7 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
         fp2_add(&A24in[core_id].z, &A24in[core_id].z, &A24in[core_id].z);
 
         // Evaluate isogeny
-        ec_eval_even_strategy_parallel(&A24out[core_id][0], &A24out[core_id][1], &K2[core_id], &A24in[core_id], &K[core_id]);
+        ec_eval_even_strategy_parallel(&A24out[core_id][1 - (1 & (core_id!=0))], &A24out[core_id][1 & (core_id!=0)], &K2[core_id], &A24in[core_id], &K[core_id]);
 
         // Get coefficient in (A:C) form
         fp2_add(&Eout[core_id].A, &A24out[core_id][0].x, &A24out[core_id][0].x);

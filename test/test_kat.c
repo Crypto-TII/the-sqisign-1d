@@ -15,6 +15,7 @@ You are solely responsible for determining the appropriateness of using and dist
 #include <rng.h>
 #include <sig.h>
 #include <api.h>
+#include <encoded_sizes.h>
 
 #define MAX_MARKER_LEN         50
 
@@ -95,8 +96,8 @@ static int test_sig_kat(int cnt) {
 
         m = (unsigned char *)calloc(mlen, sizeof(unsigned char));
         m1 = (unsigned char *)calloc(mlen, sizeof(unsigned char));
-        sm = (unsigned char *)calloc(mlen + CRYPTO_BYTES, sizeof(unsigned char));
-        sm_rsp = (unsigned char *)calloc(mlen + CRYPTO_BYTES, sizeof(unsigned char));
+        sm = (unsigned char *)calloc(mlen + PARALLEL_SIGNATURE_LEN, sizeof(unsigned char));
+        sm_rsp = (unsigned char *)calloc(mlen + PARALLEL_SIGNATURE_LEN, sizeof(unsigned char));
 
         if ( !ReadHex(fp_rsp, m, (int)mlen, "msg = ") ) {
             printf("ERROR: unable to read 'msg' from <%s>\n", fn_rsp);

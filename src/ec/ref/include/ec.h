@@ -452,7 +452,8 @@ void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
 
 /**
  * @brief Evaluates an isogeny of degree 2^(f-1), where f is the power of 2 in the factorization of p+1, evaluating the
- * A24 = (A+2C:4C) coefficient and also the j invariant of the second-to-last curve in the chain
+ * A24 = (A+2C:4C) coefficient and also the j invariant of the second-to-last curve in the chain.
+ * Warning: Only works for even f
  *
  * @param A24out computed codomain curve coefficient in the form (A+2C:4C)
  * @param A24in the domain curve coefficient in the form (A+2C:4C)
@@ -463,6 +464,7 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
 
 /**
  * @brief Evaluates an isogeny of degre 2^(f-1) while recording the point of order 2 in the kernel and the the curve found midway after lambda steps.
+ * Warning: Assumes that (0,0) is not in the kernel, and only works for even f.
  *
  * @param A24out computed codomain curve coefficient in the form (A+2C:4C)
  * @param A24mid computed midway curve after degree 2^lambda, in the form (A+2C:4C)
