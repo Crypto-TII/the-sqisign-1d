@@ -26,6 +26,8 @@
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SMART_SIGNATURE_LEN)
 #elif defined(UNCOMPRESSED_SIGNATURE)
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + UNCOMPRESSED_SIGNATURE_LEN)
+#elif defined(PARALLEL_SIGNATURE)
+#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + PARALLEL_SIGNATURE_LEN)
 #else
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SIGNATURE_LEN)
 #endif
@@ -120,13 +122,16 @@ static int bench_sig(int runs, int csv)
 
 #if defined(SMART_SIGNATURE)
     printf("Using smart signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #elif defined(UNCOMPRESSED_SIGNATURE)
     printf("Using uncompressed signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#elif defined(PARALLEL_SIGNATURE)
+    printf("Using parallel-friendly signatures.\n");
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_parallel.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #else
     printf("Using regular signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #endif
 
     if ((fp_rsp = fopen(fn_rsp, "r")) == NULL) {
@@ -187,6 +192,8 @@ static int bench_sig(int runs, int csv)
         sqisign_open_smart(m, &mlen, sm, *smlen, pk);
 #elif defined(UNCOMPRESSED_SIGNATURE)
         sqisign_open_uncompressed(m, &mlen, sm, *smlen, pk);
+#elif defined(PARALLEL_SIGNATURE)
+        sqisign_open_parallel(m, &mlen, sm, *smlen, pk);
 #else
         sqisign_open(m, &mlen, sm, *smlen, pk);
 #endif

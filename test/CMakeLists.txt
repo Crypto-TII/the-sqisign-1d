@@ -40,6 +40,11 @@ FOREACH(SVARIANT ${SVARIANT_S})
     target_include_directories(sqisign_bench_verif_kat_${SVARIANT}_uncompressed PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
     target_compile_definitions(sqisign_bench_verif_kat_${SVARIANT}_uncompressed PRIVATE UNCOMPRESSED_SIGNATURE)
 
+    add_executable(sqisign_bench_verif_kat_${SVARIANT}_parallel bench_verif_kat.c)
+    target_link_libraries(sqisign_bench_verif_kat_${SVARIANT}_parallel sqisign_${SVARIANT_LOWER})
+    target_include_directories(sqisign_bench_verif_kat_${SVARIANT}_parallel PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
+    target_compile_definitions(sqisign_bench_verif_kat_${SVARIANT}_parallel PRIVATE PARALLEL_SIGNATURE)
+
     else()
 
     # Executables for non-NIST-compliant variants

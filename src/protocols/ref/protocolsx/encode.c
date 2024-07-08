@@ -513,6 +513,32 @@ assert(enc - start == UNCOMPRESSED_SIGNATURE_LEN);
 }
 
 /**
+ * @brief Encodes a parallel-friendly signature to a byte array
+ *
+ * @param enc Output: encoded signature
+ * @param sig: the signature
+ */
+void signature_encode_parallel(unsigned char* enc, const signature_parallel_t* sig)
+{
+unsigned char *const start = enc;
+    ec_point_encode(enc, &sig->kernel_points[0]);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_encode(enc, &sig->kernel_points[1]);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_encode(enc, &sig->kernel_points[2]);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_encode(enc, &sig->kernel_points[3]);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_curve_encode(&sig->E_COM, enc);
+    enc += EC_CURVE_ENCODED_BYTES;
+    ec_curve_encode(&sig->E_1, enc);
+    enc += EC_CURVE_ENCODED_BYTES;
+    ec_curve_encode(&sig->E_3, enc);
+    enc += EC_CURVE_ENCODED_BYTES;
+assert(enc - start == PARALLEL_SIGNATURE_LEN);
+}
+
+/**
  * @brief Decodes a smart-sampling-based signature from a byte array
  *
  * @param sig Output: the decoded signature
@@ -547,6 +573,32 @@ const unsigned char *const start = enc;
     ec_curve_decode(enc, &sig->E_COM);
     enc += EC_CURVE_ENCODED_BYTES;
 assert(enc - start == UNCOMPRESSED_SIGNATURE_LEN);
+}
+
+/**
+ * @brief Decodes a parallel-friendly signature from a byte array
+ *
+ * @param sig Output: the decoded signature
+ * @param enc: encoded signature
+ */
+void signature_decode_parallel(signature_parallel_t* sig, const unsigned char* enc)
+{
+const unsigned char *const start = enc;
+    ec_point_decode(&sig->kernel_points[0], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_decode(&sig->kernel_points[1], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_decode(&sig->kernel_points[2], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_decode(&sig->kernel_points[3], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_curve_decode(enc, &sig->E_COM);
+    enc += EC_CURVE_ENCODED_BYTES;
+    ec_curve_decode(enc, &sig->E_1);
+    enc += EC_CURVE_ENCODED_BYTES;
+    ec_curve_decode(enc, &sig->E_3);
+    enc += EC_CURVE_ENCODED_BYTES;
+assert(enc - start == PARALLEL_SIGNATURE_LEN);
 }
 
 
@@ -668,3 +720,62 @@ void hash_to_challenge_smart(ec_point_t *output, const ec_curve_t *curve, const 
     }
 }
 
+void hash_to_challenge_parallel(ec_point_t *output, const ec_curve_t *curve, const unsigned char *message, size_t length)
+{
+    unsigned char buf[FP2_ENCODED_BYTES];
+    digit_t scalar[NWORDS_ORDER];
+    fp2_t j;
+    ec_point_t A24;
+    shake256incctx ctx;
+
+    // Curve coefficient in the form A24 = (A+2C:4C)
+    fp2_add(&A24.z, &curve->C, &curve->C);
+    fp2_add(&A24.x, &curve->A, &A24.z);
+    fp2_add(&A24.z, &A24.z, &A24.z);
+
+    ec_j_inv(&j, curve);
+    fp2_encode(&j, buf);
+
+    fp_mont_setone(output->z.re);
+    fp_set(output->z.im, 0);
+    
+    uint8_t ctr = 0;
+    while(1)
+    {
+        shake256_inc_init(&ctx);
+        shake256_inc_absorb(&ctx, buf, FP2_ENCODED_BYTES);
+        shake256_inc_absorb(&ctx, message, length);
+        shake256_inc_absorb(&ctx, &ctr, 1);
+        shake256_inc_finalize(&ctx);
+        shake256_inc_squeeze((void *) scalar, NWORDS_ORDER * sizeof(digit_t), &ctx);
+
+        fp_from_digit_array(output->x.re, scalar);
+        fp2_tomont(&output->x, &output->x);
+        fp_set(output->x.im, 0);
+        for(int i = 0; i < NONRES[0]; i++){
+            fp_add(output->x.im, output->x.im, output->x.re);
+        }
+        if(ec_is_on_curve(curve, output))
+        {
+            break;
+        }
+        ctr++;
+    }
+
+    // Clear cofactors
+#if POWER_OF_3 > 0
+    ec_point_t A3;
+    fp2_copy(&A3.x, &A24.x);
+    fp2_sub(&A3.z, &A24.x, &A24.z);
+    for(int i = 0; i < POWER_OF_3; i++){
+        xTPL(output, output, &A3);
+    }
+#endif
+
+    for(int i = (POWER_OF_3 > 0) & 1; i < P_LEN; i++){
+        for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+            xMULdac(output, output, DACS[i], DAC_LEN[i], &A24);
+        }
+    }
+    xDBLv2(output, output, &A24);
+}

@@ -51,13 +51,13 @@ static int test_sig_kat(int cnt) {
 
 #if defined(SMART_SIGNATURE)
     printf("Using smart signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_smart.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #elif defined(UNCOMPRESSED_SIGNATURE)
     printf("Using uncompressed signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_uncompressed.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #else
     printf("Using regular signatures.\n");
-    sprintf(fn_rsp, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #endif
 
     if ( (fp_rsp = fopen(fn_rsp, "r")) == NULL ) {

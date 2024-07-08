@@ -462,6 +462,17 @@ void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
 void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_to_last_j_inv, ec_point_t* A24in, const ec_point_t *kernel);
 
 /**
+ * @brief Evaluates an isogeny of degre 2^(f-1) while recording the point of order 2 in the kernel and the the curve found midway after lambda steps.
+ *
+ * @param A24out computed codomain curve coefficient in the form (A+2C:4C)
+ * @param A24mid computed midway curve after degree 2^lambda, in the form (A+2C:4C)
+ * @param K2 computed point of order 2 over which the kernel point lays
+ * @param A24in the domain curve coefficient in the form (A+2C:4C)
+ * @param kernel a kernel generator of order 2^(f-1)
+ */
+void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_point_t *K2, ec_point_t* A24in, const ec_point_t *kernel);
+
+/**
  * @brief Evaluates an isogeny of degree 2^lambda while pushing a single point. Assumes that the kernel doesn't contain (0,0)
  *
  * @param image the codomain curve in the ( A : C) form

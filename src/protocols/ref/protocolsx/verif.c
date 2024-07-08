@@ -338,3 +338,69 @@ int protocols_verif_uncompressed(const signature_uncompressed_t *sig, const publ
     protocols_verif_unpack_chall_uncompressed(&jinv, &jprev, sig, pk);
     return protocols_verif_from_chall_uncompressed(sig, &jinv, &jprev, m, l);
 }
+
+int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t *pk, const unsigned char* m, size_t l)
+{
+    ec_point_t A24out[5][2], A24in[5], jinv[5], K[5], K2[5], jA;
+    ec_curve_t Ein[5], Eout[5];
+
+    // Load kernel points
+    hash_to_challenge_parallel(&K[0], &sig->E_COM, m, l);
+    copy_point(&K[1], &sig->kernel_points[0]);
+    copy_point(&K[2], &sig->kernel_points[1]);
+    copy_point(&K[3], &sig->kernel_points[2]);
+    copy_point(&K[4], &sig->kernel_points[3]);
+
+    // Load domain curves
+    fp2_copy(&Ein[0].A, &sig->E_COM.A);
+    fp2_copy(&Ein[0].C, &sig->E_COM.C);
+    fp2_copy(&Ein[1].A, &sig->E_1.A);
+    fp2_copy(&Ein[1].C, &sig->E_1.C);
+    fp2_copy(&Ein[2].A, &sig->E_1.A);
+    fp2_copy(&Ein[2].C, &sig->E_1.C);
+    fp2_copy(&Ein[3].A, &sig->E_3.A);
+    fp2_copy(&Ein[3].C, &sig->E_3.C);
+    fp2_copy(&Ein[4].A, &sig->E_3.A);
+    fp2_copy(&Ein[4].C, &sig->E_3.C);
+
+    // Evaluate isogenies
+    // TODO: Parallelize me!
+    for(int core_id = 0; core_id < 5; core_id ++){
+
+        // Get coefficient in (A+2C:4C) form
+        fp2_add(&A24in[core_id].z, &Ein[core_id].C, &Ein[core_id].C);
+        fp2_add(&A24in[core_id].x, &Ein[core_id].A, &A24in[core_id].z);
+        fp2_add(&A24in[core_id].z, &A24in[core_id].z, &A24in[core_id].z);
+
+        // Evaluate isogeny
+        ec_eval_even_strategy_parallel(&A24out[core_id][0], &A24out[core_id][1], &K2[core_id], &A24in[core_id], &K[core_id]);
+
+        // Get coefficient in (A:C) form
+        fp2_add(&Eout[core_id].A, &A24out[core_id][0].x, &A24out[core_id][0].x);
+        fp2_sub(&Eout[core_id].A, &Eout[core_id].A, &A24out[core_id][0].z);
+        fp2_add(&Eout[core_id].A, &Eout[core_id].A, &Eout[core_id].A);
+        fp2_copy(&Eout[core_id].C, &A24out[core_id][0].z);
+
+        // Get j-invariant
+        ec_j_inv_proj(&jinv[core_id], &Eout[core_id]);
+    }
+
+    bool pass = true;
+
+    // Ciclicity test
+    if(ec_is_equal(&K2[1], &K2[2])) pass = false;
+    if(ec_is_equal(&K2[3], &K2[4])) pass = false;
+
+    // Check that (0,0) wasn't in the kernels
+    for(int i = 0; i < 5; i++){
+        if(fp2_is_zero(&K2[0].x)) pass = false;
+    }
+
+    // Check that the codomain curves connect
+    ec_j_inv_proj(&jA, &pk->E);
+    if(!ec_is_equal(&jA, &jinv[1])) pass = false;
+    if(!ec_is_equal(&jinv[2], &jinv[3])) pass = false;
+    if(!ec_is_equal(&jinv[4], &jinv[0])) pass = false;
+
+    return pass;
+}

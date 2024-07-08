@@ -232,7 +232,7 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
         // Evaluate 4-isogeny
         if(j == 0){ // if this is the first isogeny we need to check that it is not over (0,0)
             xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
-            if(ec_is_zero(&K2)){
+            if(fp2_is_zero(&K2.x)){
                 xisog_4_singular(&B24, SPLITTING_POINTS[current], B24);
                 xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
             }
@@ -252,7 +252,7 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
     }
 
     // We are missing either 1 or 2 2-isogenies depending on the parity of POWER_OF_2-1
-    if((POWER_OF_2 - 1) & 0){
+    if((POWER_OF_2 - 1) & 1){
         // Second-to-last 2-isogeny
         xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
         xisog_2(&B24, K2);
@@ -268,6 +268,72 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
 
     // Final 2-isogeny
     xisog_2(A24out, SPLITTING_POINTS[current]);
+}
+
+void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_point_t *K2, ec_point_t* A24in, const ec_point_t *kernel){
+        
+    uint8_t log2_of_e, tmp;
+    fp2_t t0;
+    digit_t e_half = (POWER_OF_2)>>1;
+    digit_t e_secpar_half = (POWER_OF_2)>>1;
+    for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
+    log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
+
+    ec_point_t SPLITTING_POINTS[log2_of_e], B24;
+    ec_curve_t A;
+    copy_point(&SPLITTING_POINTS[0], kernel);
+    copy_point(&B24, A24in);
+
+    int strategy = 0,    // Current element of the strategy to be used
+    i, j;
+
+    int BLOCK = 0,       // Keeps track of point order
+    current = 0;         // Number of points being carried
+    int XDBLs[log2_of_e]; // Number of doubles performed
+    
+    // First chain of 4-isogenies, up to degree 2^lambda
+    for(j = 0; j < (e_half - 1); j++)
+    {   
+        // Get the next point of order 4
+        while (BLOCK != (e_half -  1 - j) )
+        {
+            // A new split will be added
+            current += 1;
+            // We set the seed of the new split to be computed and saved
+            copy_point(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current - 1]);
+            for(i = 0; i < 2*STRATEGY4_SMART[strategy]; i++)
+                xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], &B24);
+            XDBLs[current] = STRATEGY4_SMART[strategy];  // The number of doublings performed is saved
+            BLOCK += STRATEGY4_SMART[strategy];          // BLOCK is increased by the number of doublings performed
+            strategy += 1;                  // Next, we move to the next element of the strategy
+        }
+
+        // For the first step we record the kernel point of order 2
+        if(j == 0){
+            xDBLv2(K2, &SPLITTING_POINTS[current], &B24);
+        }
+
+        // Evaluate 4-isogeny. We assume (0,0) is not in the kernel
+        xisog_4(&B24, SPLITTING_POINTS[current]);
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+
+        // After degree 2^lambda we record the curve
+        if(j == (POWER_OF_2_SECPAR>>1) - 1){
+            copy_point(A24mid, &B24);
+        }
+
+        BLOCK -= XDBLs[current];  
+        XDBLs[current] = 0;      
+        current -= 1;            
+    }
+
+    // We are missing either a 2-isogeny or a 4-isogeny depending on the parity of POWER_OF_2-1
+    if((POWER_OF_2 - 1) & 1){
+        xisog_2(A24out, SPLITTING_POINTS[current]);
+    }
+    else{
+        xisog_4(A24out, SPLITTING_POINTS[current]);
+    }
 }
 
 void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
