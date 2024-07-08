@@ -104,7 +104,7 @@ int sqisign_open_parallel(unsigned char *m,
 int sqisign_open(unsigned char *m,
               size_t *mlen, const unsigned char *sm,
               size_t smlen, const unsigned char *pk) { 
-    #if POWER_OF_THREE > 0
+    #if POWER_OF_3 > 0
     int ret = 0;
     public_key_t pkt = { 0 };
     signature_t sigt;
@@ -179,7 +179,7 @@ int sqisign_verify(const unsigned char *m,
                 size_t mlen, const unsigned char *sig,
                 size_t siglen, const unsigned char *pk) {
 
-    #if POWER_OF_THREE > 0
+    #if POWER_OF_3 > 0
     int ret = 0;
     public_key_t pkt = { 0 };
     signature_t sigt;
