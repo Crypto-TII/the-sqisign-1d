@@ -135,6 +135,92 @@ void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords)
 
 void fp_exp3div4(digit_t* out, const digit_t* a)
 { 
+#if defined(PRIME_P248)
+    // Optimized implementation for p248
+
+    // Addition chain for p248
+    // (p248 - 3) div 4 = 2^248 + 2^246 - 1
+    // Cost: 247 SQR + 12 MUL
+    fp_t acc, acct, acc1, acc3, acc12;
+
+    // acc = a^(2^1-1)
+    memcpy((digit_t*)acc1, (digit_t*)a, NWORDS_FIELD*RADIX/8);
+
+    // acc = a^(2^2-1)
+    fp_sqr(acc, acc1);
+    fp_mul(acc, acc, acc1);
+
+    // acc = a^(2^3-1)
+    fp_sqr(acc, acc);
+    fp_mul(acc3, acc, acc1);
+
+    // acc = a^(2^6-1)
+    fp_sqr(acct, acc3);
+    for (int i = 0; i < 2; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc3);
+
+    // acc = a^(2^12-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 5; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc12, acct, acc);
+
+    // acc = a^(2^24-1)
+    fp_sqr(acct, acc12);
+    for (int i = 0; i < 11; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc12);
+
+    // acc = a^(2^48-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 23; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc);
+
+    // acc = a^(2^60-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 11; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc12);
+
+    // acc = a^(2^120-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 59; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc);
+
+    // acc = a^(2^123-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 2; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acc, acct, acc3);
+
+    // acc = a^(2^246-1)
+    fp_sqr(acct, acc);
+    for (int i = 0; i < 122; i++) {
+        fp_sqr(acct, acct);
+    }
+    fp_mul(acct, acct, acc);
+
+    // acc = a^(2^246)
+    fp_mul(acc, acct, a);
+
+    // acc = a^(2^248)
+    fp_sqr(acc, acc);
+    fp_sqr(acc, acc);
+
+    // acct = a^(2^248) * a^(2^246-1)
+    fp_mul(out, acct, acc);
+
+#else
     fp_t p_t, acc;
     digit_t bit;
 
@@ -153,6 +239,7 @@ void fp_exp3div4(digit_t* out, const digit_t* a)
         }
         fp_sqr(acc, acc);
     }
+#endif
 }
 
 void _fp_inv(digit_t* a)

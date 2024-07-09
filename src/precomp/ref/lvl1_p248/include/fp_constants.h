@@ -1,6 +1,8 @@
 #ifndef FP_CONSTANTS_H
 #define FP_CONSTANTS_H
 
+#define PRIME_P248
+
 #if 0
 #elif 8*DIGIT_LEN == 16
 

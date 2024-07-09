@@ -7,7 +7,7 @@ if not require_version(10, 0, print_message=True):
 
 ################################################################
 
-from parameters import p
+from parameters import p,Tpls,Tmin,f
 
 ################################################################
 
@@ -33,10 +33,15 @@ elif (p == 0x255946a8869bc68c15b0036936e79202bdbe6326507d01fe3ac5904a0dea65faf0a
 
 from math import ceil, log
 
+name = max([l for l,e in factor(Tpls)] + [l for l,e in factor(Tmin)])
+if name < 1000: name = f
+
 with open('include/fp_constants.h', 'w') as hfile:
 
     print('#ifndef FP_CONSTANTS_H', file=hfile)
     print('#define FP_CONSTANTS_H', file=hfile)
+    print('',file=hfile)
+    print(f'#define PRIME_P{name}', file=hfile)
     print('',file=hfile)
     print('#if 0',file=hfile)
     for RADIX in (16,32,64):
@@ -46,7 +51,7 @@ with open('include/fp_constants.h', 'w') as hfile:
             print(f'#define NWORDS_FIELD {ceil(log(p,2**RADIX))}',file=hfile)
         else:
             if RADIX == 32:
-                print(f'#if defined(ARITH_REF) || defined (ARITH_M4) || defined(ARITH_BROADWELL)', file=hfile)
+                print(f'#if defined(ARITH_REF) || defined(ARITH_M4) || defined(ARITH_BROADWELL)', file=hfile)
             else:
                 print(f'#if defined(ARITH_REF) || defined(ARITH_BROADWELL)', file=hfile)
             print(f'#define NWORDS_FIELD {ceil(log(p,2**RADIX))}',file=hfile)

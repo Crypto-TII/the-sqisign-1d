@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <fp.h>
 
+extern modpro(const digit_t* a, digit_t* out);
+
 void fp_set(digit_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize
 
@@ -86,23 +88,6 @@ void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords)
 }
 
 void fp_exp3div4(digit_t* out, const digit_t* a)
-{ 
-    fp_t p_t, acc;
-    digit_t bit;
-
-    memcpy((digit_t*)p_t, (digit_t*)p, NWORDS_FIELD*RADIX/8);
-    memcpy((digit_t*)acc, (digit_t*)a, NWORDS_FIELD*RADIX/8);
-    mp_shiftr(p_t, 1, NWORDS_FIELD);
-    mp_shiftr(p_t, 1, NWORDS_FIELD);
-    fp_set(out, 1);
-    fp_tomont(out, out);
-
-    for (int i = 0; i < NWORDS_FIELD*RADIX-2; i++) {
-        bit = p_t[0] & 1;
-        mp_shiftr(p_t, 1, NWORDS_FIELD);
-        if (bit == 1) {
-            fp_mul(out, out, acc);
-        }
-        fp_sqr(acc, acc);
-    }
+{
+    modpro(a, out);
 }
