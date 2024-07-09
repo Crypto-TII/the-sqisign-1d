@@ -168,8 +168,6 @@ void _fp_inv(digit_t* a)
     fp_mul(a, t, a);    // a^(p-2)
 }
 
-#include "../../generic/inversion.inc"
-
 bool _fp_is_square(const digit_t* a)
 { // Is field element a square?
   // Output: out = 0 (false), 1 (true)
@@ -183,8 +181,6 @@ bool _fp_is_square(const digit_t* a)
 
     return fp_is_equal(t, one);
 }
-
-#include "../../generic/symbol.inc"
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p

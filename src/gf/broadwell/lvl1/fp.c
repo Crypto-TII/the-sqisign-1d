@@ -27,3 +27,6 @@ void fp_mont_setone(digit_t* out1) {
     out1[3] = UINT64_C(0x2c75875e51a899cf);
 #endif
 }
+
+#include "../../generic/inversion.inc"
+#include "../../generic/symbol.inc"

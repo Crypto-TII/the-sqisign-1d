@@ -8,130 +8,128 @@ typedef int32_t sidigit_t;
 typedef int64_t sidigit_t;
 #endif
 
-#define SELECT(A, B, C)	((-(C) & ((A) ^ (B))) ^ (A))
 #define SIGN(D)	(((digit_t)D) >> (RADIX - 1))
+#define SWAP(A, B)	((A) ^= (B), (B) ^= (A), (A) ^= (B))
+
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
+
 #define MASK(B)	((-(digit_t)((B) >= RADIX)) | (((digit_t)1 << ((B) % RADIX)) - 1))
-#define LSH(H, L, I)													\
-		(H << I) | (L & -(I != 0)) >> ((RADIX - I) & (RADIX - 1))
-
-static digit_t porninstep(sdigit_t m[4], const digit_t f[2], const digit_t g[2], 
-		digit_t k, size_t s) {
-	digit_t limbx, ai = 1, bi = 0, ci = 0, di = 1;
-	digit_t g_lo = g[0], g_hi = g[1], f_lo = f[0], f_hi = f[1];
-	digit_t t_lo, t_hi, odd, borrow, xorm;
-
-	/* Unrolling twice gives some small speedup. */
-	for (size_t i = 0; i < s; i++) {
-		odd = 0 - (g_lo & 1);
-
-		/* g_ -= f_ if g_ is odd */
-		t_lo = g_lo, t_hi = g_hi;
-
-		borrow = 0;
-		limbx = g_lo - (f_lo & odd);
-		borrow = (g_lo < limbx);
-		g_lo = limbx;
-
-		limbx = g_hi - (f_hi & odd);
-		xorm = limbx - borrow;
-		borrow = -((g_hi < limbx) || (borrow && !limbx));
-		g_hi = xorm;
-
-		k += ((t_lo & f_lo) >> 1) & borrow;
-
-		/* negate g_-f_ if it borrowed */
-		g_lo ^= borrow;
-		g_hi ^= borrow;
-		limbx = g_lo + (borrow & 1);
-		g_hi += (g_lo < limbx);
-		g_lo = limbx;
-
-		/* f_=g_ if g_-f_ borrowed */
-		f_lo = ((t_lo ^ f_lo) & borrow) ^ f_lo;
-		f_hi = ((t_hi ^ f_hi) & borrow) ^ f_hi;
-
-		/* exchange ai and ci if g_-f_ borrowed */
-		xorm = (ai ^ ci) & borrow;
-		ai ^= xorm;
-		ci ^= xorm;
-
-		/* exchange bi and di if g_-f_ borrowed */
-		xorm = (bi ^ di) & borrow;
-		bi ^= xorm;
-		di ^= xorm;
-
-		/* subtract if g_ was odd */
-		ai -= ci & odd;
-		bi -= di & odd;
-
-		ci <<= 1;
-		di <<= 1;
-		g_lo >>= 1;
-		g_lo |= g_hi << (RADIX - 1);
-		g_hi >>= 1;
-
-		k += (f_lo + 2) >> 2;
-	}
-
-	m[0] = ai;
-	m[1] = bi;
-	m[2] = ci;
-	m[3] = di;
-
-	return k;
-}
+#define LMASK	(MASK(RADIX >> 1))
+#define HMASK	(LMASK << (RADIX >> 1))
 
 bool fp_is_square(const fp_t a) {
-	const size_t s = RADIX - 2;
-	digit_t f[NWORDS_FIELD + 1], g[NWORDS_FIELD + 1], t[NWORDS_FIELD + 1] = { 0 };
-	digit_t t0[NWORDS_FIELD + 1], t1[NWORDS_FIELD + 1];
-	digit_t g_[2], f_[2], neg, l, g_hi, g_lo, f_hi, f_lo, mask, k = 0;
-	sdigit_t m[4];
+	sidigit_t ai, bi, ci, di;
+	digit_t n, d, t;
+	digit_t t0[NWORDS_FIELD + 1] = { 0 }, t1[NWORDS_FIELD + 1] = { 0 };
+	digit_t t2[NWORDS_FIELD + 1] = { 0 }, t3[NWORDS_FIELD + 1] = { 0 };
+	unsigned int neg, z, i, j, s = (RADIX >> 1) - 2;
+
+	/* Optimized Pornin's Algorithm by Aleksei Vambol from
+	 * https://github.com/privacy-scaling-explorations/halo2curves/pull/95 */
 
 	if (fp_is_zero(a)) {
 		return 0;
 	}
 
-	fp_copy(f, p);
 	/* Convert a from Montgomery form. */
-	fp_frommont(g, a);
+	fp_frommont(t0, a);
+	fp_copy(t1, p);
+	t = 0;
+	j = NWORDS_FIELD;
 
-	//int iterations = 2 * NWORDS_FIELD * RADIX;
-	//for (size_t i = 0; i < iterations / s; i++) {
-	while (!fp_is_zero(g)) {
-		f_hi = f[NWORDS_FIELD - 1], f_lo = f[NWORDS_FIELD - 2];
-		g_hi = g[NWORDS_FIELD - 1], g_lo = g[NWORDS_FIELD - 2];
-		for (int j = NWORDS_FIELD - 2; j >= 0; j--) {
-			l = (f_hi | g_hi);
-			l = ~l & (l - 1);
-			mask = -(l >> (RADIX - 1));
-			f_hi = ((f_lo ^ f_hi) & mask) ^ f_hi;
-			g_hi = ((g_lo ^ g_hi) & mask) ^ g_hi;
-			f_lo = ((f[j] ^ f_lo) & mask) ^ f_lo;
-			g_lo = ((g[j] ^ g_lo) & mask) ^ g_lo;
+	while (1) {
+		ai = di = 1;
+		bi = ci = 0;
+
+		while ((t0[j] == 0) && (t1[j] == 0)) {
+			j--;
 		}
-		size_t len = __builtin_clzll(f_hi | g_hi);
-		f_[0] = f[0], f_[1] = LSH(f_hi, f_lo, len);
-		g_[0] = g[0], g_[1] = LSH(g_hi, g_lo, len);
+		if (j == 0) {
+			n = t0[0];
+			d = t1[0];
+			while (n != 0) {
+				if (n & 1) {
+					if (n < d) {
+						SWAP(n, d);
+						t ^= (n & d);
+					}
+					n = (n - d) >> 1;
+					t ^= d ^ (d >> 1);
+				} else {
+					z = __builtin_ctzl(n);
+					t ^= (d ^ (d >> 1)) & (z << 1);
+					n >>= z;
+				}
+			}
+			return ((d == 1) && !(t & 2));
+		}
 
-		k = porninstep(m, f_, g_, k, s);
+		z = MIN(__builtin_clzl(t0[j]), __builtin_clzl(t1[j]));
+		n = t0[j] << z;
+		d = t1[j] << z;
+		if (z > (RADIX >> 1)) {
+			n |= t0[j - 1] >> z;
+			d |= t1[j - 1] >> z;
+		}
+		n = (n & HMASK) | (t0[0] & LMASK);
+		d = (d & HMASK) | (t1[0] & LMASK);
 
-		t0[NWORDS_FIELD] = bn_muls_low(t0, g, 0, m[0], NWORDS_FIELD);
-		t1[NWORDS_FIELD] = bn_muls_low(t1, f, 0, m[1], NWORDS_FIELD);
-		bn_addn_low(t0, t0, t1, NWORDS_FIELD + 1);
-		neg = SIGN(t0[NWORDS_FIELD]);
-		bn_rshs_low(t, t0, NWORDS_FIELD + 1, (RADIX - 2));
-		bn_negs_low(t, t, neg, NWORDS_FIELD);
+		i = s;
+		while (i > 0) {
+			if (n & 1) {
+				if (n < d) {
+					SWAP(ai, ci);
+					SWAP(bi, di);
+					SWAP(n, d);
+					t ^= (n & d);
+				}
+				n = (n - d) >> 1;
+				ai = ai - ci;
+				bi = bi - di;
+				ci = ci << 1;
+				di = di << 1;
+				t ^= d ^ (d >> 1);
+				i -= 1;
+			} else {
+				z = MIN(i, __builtin_ctzl(n));
+				t ^= (d ^ (d >> 1)) & (z << 1);
+				ci = ci << z;
+				di = di << z;
+				n >>= z;
+				i -= z;
+			}
+		}
 
-		t0[NWORDS_FIELD] = bn_muls_low(t0, g, 0, m[2], NWORDS_FIELD);
-		t1[NWORDS_FIELD] = bn_muls_low(t1, f, 0, m[3], NWORDS_FIELD);
-		bn_addn_low(t1, t1, t0, NWORDS_FIELD + 1);
-		bn_rshs_low(f, t1, NWORDS_FIELD + 1, (RADIX - 2));
-		bn_negs_low(f, f, SIGN(t1[NWORDS_FIELD]), NWORDS_FIELD);
+#if ARITH_BROADWELL
+		// If using the ASM backend, keep precision fixed to use CT functions.
+		j = NWORDS_FIELD;
+#else
+		j = j + 1;
+#endif
+		t2[j] = bn_muls_low(t2, t0, 0, ai, j);
+		t3[j] = bn_muls_low(t3, t1, 0, bi, j);
+		bn_addn_low(t3, t3, t2, j + 1);
 
-		fp_copy(g, t);
-		k += (f[0] >> 1) & neg;
+		t2[j] = bn_muls_low(t2, t0, 0, ci, j);
+		t1[j] = bn_muls_low(t1, t1, 0, di, j);
+		bn_addn_low(t1, t1, t2, j + 1);
+
+		bn_rshs_low(t1, t1, j + 1, s);
+		bn_rshs_low(t0, t3, j + 1, s);
+
+		if (fp_is_zero(t0)) {
+			return ((t1[0] == 1) && !(t & 2));
+		}
+
+		if (SIGN(t0[j])) {
+			t ^= t1[0];
+			bn_negs_low(t0, t0, SIGN(t0[j]), j + 1);
+		}
+		if (SIGN(t1[j])) {
+			bn_negs_low(t1, t1, SIGN(t1[j]), j + 1);
+		}
 	}
 
-	return (k & 1 ? 0 : 1);
+	return t;
 }
