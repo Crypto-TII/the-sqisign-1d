@@ -350,6 +350,7 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
 {
     ec_point_t A24out[5][2], A24in[5], jinv[5], K[5], K2[5], jA;
     ec_curve_t Ein[5], Eout[5];
+    int thr_id;
 
     // Load kernel points
     hash_to_challenge_parallel(&K[0], &sig->E_COM, m, l);
@@ -372,10 +373,12 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
 
     // Evaluate isogenies
 #if defined(PARALLEL_SIGNATURE)
-    omp_set_num_threads(PARALLEL_SIGNATURE_NUM_THREADS);
-    #pragma omp parallel for
+    #pragma omp parallel private(thr_id) num_threads(PARALLEL_SIGNATURE_NUM_THREADS)
+    {
+        thr_id = omp_get_thread_num();
+#else
+    for (thr_id = 0; thr_id < 5; thr_id++) {
 #endif
-    for (int thr_id = 0; thr_id < 5; thr_id++) {
 
         // Get coefficient in (A+2C:4C) form
         fp2_add(&A24in[thr_id].z, &Ein[thr_id].C, &Ein[thr_id].C);
