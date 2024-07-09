@@ -2,7 +2,7 @@
 #include "curve_extras.h"
 #include <assert.h>
 
-#if defined(ENABLE_SIGN)
+#if defined(ENABLE_SIGN) && !defined(PQM4)
 #define TREE_SIZE(LENF, h) (1 << (h)) * ((LENF) + 1 + ((LENF)-1) * h)
 
 int sI, sJ, sK;	// Sizes of each current I, J, and K	
