@@ -20,35 +20,35 @@ static inline void A24_to_AC(ec_curve_t *E, ec_point_t const *A24)
 
 void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length){
-        ec_point_t Q4, Q, A24;
+        ec_point_t Q4, Q, A24, K[3];
         copy_point(&Q4, &phi->kernel);
         AC_to_A24(&A24, &phi->curve);
         for(int i = 0; i < phi->length - 2; i++)
             xDBLv2(&Q4, &Q4, &A24);
         xDBLv2(&Q, &Q4, &A24);
-        if(fp2_is_zero(&Q.x)){
-            xisog_4_singular(&A24, Q4, A24);
-            xeval_4_singular(points, points, length, Q4);
-            xeval_4_singular(&Q, &phi->kernel, 1, Q4);
+        if (fp2_is_zero(&Q.x)) {
+            xisog_4_singular(&A24, Q4, A24, K);
+            xeval_4_singular(points, points, length, Q4, K);
+            xeval_4_singular(&Q, &phi->kernel, 1, Q4, K);
         }
-        else{
-            xisog_4(&A24, Q4);
-            xeval_4(points, points, length);
-            xeval_4(&Q, &phi->kernel, 1);
+        else {
+            xisog_4(&A24, Q4, K);
+            xeval_4(points, points, length, K);
+            xeval_4(&Q, &phi->kernel, 1, K);
         }
         ec_eval_even_strategy(image, points, length, &A24, &Q, phi->length-2);
     }
 
 void ec_eval_even_nonzero(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length){
-        ec_point_t Q4, A24;
+        ec_point_t Q4, A24, K[3];
         copy_point(&Q4, &phi->kernel);
         AC_to_A24(&A24, &phi->curve);
         for(int i = 0; i < phi->length - 2; i++)
             xDBLv2(&Q4, &Q4, &A24);
-        xisog_4(&A24, Q4);
-        xeval_4(points, points, length);
-        xeval_4(&Q4, &phi->kernel, 1);
+        xisog_4(&A24, Q4, K);
+        xeval_4(points, points, length, K);
+        xeval_4(&Q4, &phi->kernel, 1, K);
         ec_eval_even_strategy(image, points, length, &A24, &Q4, phi->length-2);
     }
 
@@ -63,7 +63,7 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], K2;
+    ec_point_t SPLITTING_POINTS[log2_of_e], K2, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
 
     int strategy = 0,    // Current element of the strategy to be used
@@ -78,9 +78,9 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
         copy_point(&SPLITTING_POINTS[1], &SPLITTING_POINTS[0]);
         for(i = 0; i < isog_len-1; i++)
             xDBLv2(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
-        xisog_2(A24, SPLITTING_POINTS[1]);
-        xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1);
-        xeval_2(points, points, points_len);
+        xisog_2(A24, SPLITTING_POINTS[1], K);
+        xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1, K);
+        xeval_2(points, points, points_len, K);
     }
     
     // Chain of 4-isogenies
@@ -101,9 +101,9 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
         }
 
         // Evaluate 4-isogeny
-        xisog_4(A24, SPLITTING_POINTS[current]);
-        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
-        xeval_4(points, points, points_len);
+        xisog_4(A24, SPLITTING_POINTS[current], K);
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
+        xeval_4(points, points, points_len, K);
 
         BLOCK -= XDBLs[current];  
         XDBLs[current] = 0;      
@@ -111,8 +111,8 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     }
 
     // Final 4-isogeny
-    xisog_4(A24, SPLITTING_POINTS[current]);
-    xeval_4(points, points, points_len);
+    xisog_4(A24, SPLITTING_POINTS[current], K);
+    xeval_4(points, points, points_len, K);
 
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
@@ -127,7 +127,7 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24;
+    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
     copy_point(&B24, A24in);
 
@@ -143,8 +143,8 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
         copy_point(&SPLITTING_POINTS[1], &SPLITTING_POINTS[0]);
         for(i = 0; i < POWER_OF_2-1; i++)
             xDBLv2(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], &B24);
-        xisog_2(&B24, SPLITTING_POINTS[1]);
-        xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1);
+        xisog_2(&B24, SPLITTING_POINTS[1], K);
+        xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1, K);
     }
     
     // Chain of 4-isogenies
@@ -168,17 +168,17 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
         if((j == 0) && !(POWER_OF_2 & 1)){ // if this is the first isogeny we need to check that it is not over (0,0)
             xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
             if(fp2_is_zero(&K2.x)){
-                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24);
-                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
+                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24, K);
+                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current], K);
             }
             else{
-                xisog_4(&B24, SPLITTING_POINTS[current]);
-                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+                xisog_4(&B24, SPLITTING_POINTS[current], K);
+                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
             }
         }
         else{
-            xisog_4(&B24, SPLITTING_POINTS[current]);
-            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+            xisog_4(&B24, SPLITTING_POINTS[current], K);
+            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
         }
 
         BLOCK -= XDBLs[current];  
@@ -188,8 +188,8 @@ void ec_eval_even_strategy_smart(ec_point_t *Pa, ec_point_t* A24out,
 
     // Final 4-isogeny replaced by a 2-isogeny only
     xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
-    xisog_2(A24out, K2);
-    xeval_2(Pa, &SPLITTING_POINTS[current], 1);
+    xisog_2(A24out, K2, K);
+    xeval_2(Pa, &SPLITTING_POINTS[current], 1, K);
 }
 
 void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_to_last_j_inv, ec_point_t* A24in, const ec_point_t *kernel){
@@ -200,7 +200,7 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24;
+    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
     copy_point(&B24, A24in);
 
@@ -238,17 +238,17 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
         if( j == 0 ){// For the first isogeny we need to check if kernel is over (0,0)
             xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
             if(fp2_is_zero(&K2.x)){
-                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24);
-                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
+                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24, K);
+                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current], K);
             }
             else{
-                xisog_4(&B24, SPLITTING_POINTS[current]);
-                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+                xisog_4(&B24, SPLITTING_POINTS[current], K);
+                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
             }   
         }
         else{
-            xisog_4(&B24, SPLITTING_POINTS[current]);
-            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+            xisog_4(&B24, SPLITTING_POINTS[current], K);
+            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
         }
 
         BLOCK -= XDBLs[current];  
@@ -262,7 +262,7 @@ void ec_eval_even_strategy_uncompressed(ec_point_t* A24out, ec_point_t* second_t
     ec_j_inv_proj(second_to_last_j_inv, &E);
 
     // Last 2-isogeny
-    xisog_2(A24out, SPLITTING_POINTS[current]);
+    xisog_2(A24out, SPLITTING_POINTS[current], K);
 }
 
 void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_point_t *K2, ec_point_t* A24in, const ec_point_t *kernel){
@@ -273,7 +273,7 @@ void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_p
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], B24;
+    ec_point_t SPLITTING_POINTS[log2_of_e], B24, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
     copy_point(&B24, A24in);
 
@@ -311,17 +311,17 @@ void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_p
         if( j == 0 ){// For the first isogeny we need to check if kernel is over (0,0)
             xDBLv2(K2, &SPLITTING_POINTS[current], &B24);
             if(fp2_is_zero(&K2->x)){
-                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24);
-                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
+                xisog_4_singular(&B24, SPLITTING_POINTS[current], B24, K);
+                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current], K);
             }
             else{
-                xisog_4(&B24, SPLITTING_POINTS[current]);
-                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+                xisog_4(&B24, SPLITTING_POINTS[current], K);
+                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
             }   
         }
         else{
-            xisog_4(&B24, SPLITTING_POINTS[current]);
-            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+            xisog_4(&B24, SPLITTING_POINTS[current], K);
+            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
         }
 
         // After lambda/2 steps we record the curve
@@ -335,7 +335,7 @@ void ec_eval_even_strategy_parallel(ec_point_t* A24out, ec_point_t *A24mid, ec_p
     }
 
     // Last 2-isogeny
-    xisog_2(A24out, SPLITTING_POINTS[current]);
+    xisog_2(A24out, SPLITTING_POINTS[current], K);
 }
 
 void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
@@ -347,7 +347,7 @@ void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], K2;
+    ec_point_t SPLITTING_POINTS[log2_of_e], K2, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
 
     int strategy = 0,    // Current element of the strategy to be used
@@ -375,9 +375,9 @@ void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
         }
 
         // Evaluate 4-isogeny
-        xisog_4(A24, SPLITTING_POINTS[current]);
-        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
-        xeval_4(push_point, push_point, 1);
+        xisog_4(A24, SPLITTING_POINTS[current], K);
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
+        xeval_4(push_point, push_point, 1, K);
 
         BLOCK -= XDBLs[current];  
         XDBLs[current] = 0;      
@@ -385,8 +385,8 @@ void ec_eval_even_strategy_chal(ec_curve_t* image, ec_point_t* push_point,
     }
 
     // Final 4-isogeny
-    xisog_4(A24, SPLITTING_POINTS[current]);
-    xeval_4(push_point, push_point, 1);
+    xisog_4(A24, SPLITTING_POINTS[current], K);
+    xeval_4(push_point, push_point, 1, K);
 
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
@@ -401,7 +401,7 @@ void ec_eval_even_strategy_chal_uncompressed(ec_curve_t* image, ec_point_t* seco
     for(tmp = e_half, log2_of_e = 0; tmp > 0; tmp>>=1, ++log2_of_e);
     log2_of_e *= 2; // In order to ensure each splits is at most size log2_of_e
 
-    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24;
+    ec_point_t SPLITTING_POINTS[log2_of_e], K2, B24, K[3];
     copy_point(&SPLITTING_POINTS[0], kernel);
     copy_point(&B24, A24);
 
@@ -430,8 +430,8 @@ void ec_eval_even_strategy_chal_uncompressed(ec_curve_t* image, ec_point_t* seco
         }
 
         // Evaluate 4-isogeny
-        xisog_4(&B24, SPLITTING_POINTS[current]);
-        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+        xisog_4(&B24, SPLITTING_POINTS[current], K);
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, K);
 
         BLOCK -= XDBLs[current];  
         XDBLs[current] = 0;      
@@ -440,22 +440,22 @@ void ec_eval_even_strategy_chal_uncompressed(ec_curve_t* image, ec_point_t* seco
 
     // Second-to-last 2-isogeny
     xDBLv2(&K2, &SPLITTING_POINTS[current], &B24);
-    xisog_2(&B24, K2);
-    xeval_2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], 1);
+    xisog_2(&B24, K2, K);
+    xeval_2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], 1, K);
 
     // Record second-to-last j-invariant
     A24_to_AC(image, &B24);
     ec_j_inv_proj(second_to_last_j_inv, image);
 
     // Last 2-isogeny
-    xisog_2(&B24, SPLITTING_POINTS[current]);
+    xisog_2(&B24, SPLITTING_POINTS[current], K);
     A24_to_AC(image, &B24);
 }
 
 void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
         ec_point_t* points, unsigned short length){
         
-    ec_point_t ker_plus, ker_minus, P, K, A24, B24;
+    ec_point_t ker_plus, ker_minus, P, Kp, A24, B24, K[sK_max];
     int i,j,k;
 
     AC_to_A24(&A24, &phi->curve);
@@ -470,16 +470,16 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
                 xMULdac(&P, &P, DACS[j], DAC_LEN[j], &A24);
         }
         for(k = 0; k < phi->degree[i]; k++){
-            copy_point(&K, &P);
+            copy_point(&Kp, &P);
             for(j = 0; j < phi->degree[i]-k-1; j++)
-                xMULdac(&K, &K, DACS[i], DAC_LEN[i], &A24);
-            kps(i, K, A24);
-            xisog(&B24, i, A24);
-            xeval(&P, i, P, A24);
-            xeval(&ker_plus, i, ker_plus, A24);
-            xeval(&ker_minus, i, ker_minus, A24);
+                xMULdac(&Kp, &Kp, DACS[i], DAC_LEN[i], &A24);
+            kps(i, Kp, A24, K);
+            xisog(&B24, i, A24, K);
+            xeval(&P, i, P, A24, K);
+            xeval(&ker_plus, i, ker_plus, A24, K);
+            xeval(&ker_minus, i, ker_minus, A24, K);
             for(j = 0; j < length; j++)
-                xeval(&points[j], i, points[j], A24);
+                xeval(&points[j], i, points[j], A24, K);
             copy_point(&A24, &B24);
         }
     }
@@ -492,15 +492,15 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
                 xMULdac(&P, &P, DACS[j], DAC_LEN[j], &A24);
         }
         for(k = 0; k < phi->degree[i]; k++){
-            copy_point(&K, &P);
+            copy_point(&Kp, &P);
             for(j = 0; j < phi->degree[i]-k-1; j++)
-                xMULdac(&K, &K, DACS[i], DAC_LEN[i], &A24);
-            kps(i, K, A24);
-            xisog(&B24, i, A24);
-            xeval(&P, i, P, A24);
-            xeval(&ker_minus, i, ker_minus, A24);
+                xMULdac(&Kp, &Kp, DACS[i], DAC_LEN[i], &A24);
+            kps(i, Kp, A24, K);
+            xisog(&B24, i, A24, K);
+            xeval(&P, i, P, A24, K);
+            xeval(&ker_minus, i, ker_minus, A24, K);
             for(j = 0; j < length; j++)
-                xeval(&points[j], i, points[j], A24);
+                xeval(&points[j], i, points[j], A24, K);
             copy_point(&A24, &B24);
         }
     }

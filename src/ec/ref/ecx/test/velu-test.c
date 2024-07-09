@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 	fp2_t a;
 	coeff(&a, A0);
 
-	ec_point_t PA, QA, PQA, PB, QB, PQB, RA, RB;
+	ec_point_t PA, QA, PQA, PB, QB, PQB, RA, RB, K[sK_max];
 
 	// Writing the public projective x-coordinate points into Montogmery domain
 	fp2_tomont(&(PA.x), &(xPA));
@@ -179,17 +179,17 @@ int main(int argc, char* argv[])
 			assert( !isinfinity(T) );
 
     		cycles_start = cpucycles(); 
-			kps(i, T, A);
+			kps(i, T, A, K);
     		cycles_end = cpucycles();
 			cycles_KPS[i] += cycles_end - cycles_start;
 
     		cycles_start = cpucycles();
-			xisog(&B, i, A);
+			xisog(&B, i, A, K);
     		cycles_end = cpucycles();
 			cycles_xISOG[i] += cycles_end - cycles_start;
 
     		cycles_start = cpucycles(); 
-			xeval(&PB, i, PB, A);
+			xeval(&PB, i, PB, A, K);
     		cycles_end = cpucycles(); 
 			cycles_xEVAL[i] += cycles_end - cycles_start;
 
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 			assert( !isinfinity(PB) );
 			assert( !isrational(PB, a) );
 
-			xeval(&RA, i, RA, A);
+			xeval(&RA, i, RA, A, K);
 			assert( (!isinfinity(RA) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
 			assert( (isrational(RA, a) && (i < (P_LEN - 1))) || (isinfinity(RA) && (i == (P_LEN - 1))) );
 
@@ -274,17 +274,17 @@ int main(int argc, char* argv[])
 			assert( !isinfinity(T) );
 	
     		cycles_start = cpucycles(); 
-			kps(i, T, A);
+			kps(i, T, A, K);
     		cycles_end = cpucycles();
 			cycles_KPS[i] += cycles_end - cycles_start;
 
     		cycles_start = cpucycles();
-			xisog(&B, i, A);
+			xisog(&B, i, A, K);
     		cycles_end = cpucycles();
 			cycles_xISOG[i] += cycles_end - cycles_start;
 
     		cycles_start = cpucycles();
-			xeval(&PA, i, PA, A);
+			xeval(&PA, i, PA, A, K);
     		cycles_end = cpucycles(); 
 			cycles_xEVAL[i] += cycles_end - cycles_start;
 
@@ -292,7 +292,7 @@ int main(int argc, char* argv[])
 			assert( !isinfinity(PA) );
 			assert( isrational(PA, a) );
 
-			xeval(&RB, i, RB, A);
+			xeval(&RB, i, RB, A, K);
 			assert( (!isinfinity(RB) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
 			assert( (!isrational(RB, a) && (i < (P_LEN + M_LEN - 1))) || (isinfinity(RB) && (i == (P_LEN + M_LEN - 1))) );
 			

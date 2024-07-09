@@ -95,7 +95,7 @@ void ladder3pt(ec_point_t *R, const digit_t* m, ec_point_t const *P, ec_point_t 
 	copy_point(R, &X1);
 }
 
-static void xisog_2_singular(ec_point_t* B24, ec_point_t A24){
+static void xisog_2_singular(ec_point_t* B24, ec_point_t A24, ec_point_t K[3]){
 	fp2_t t0, four;
 	fp_mont_setone(four.re);
 	fp_set(four.im, 0);
@@ -117,7 +117,7 @@ static void xisog_2_singular(ec_point_t* B24, ec_point_t A24){
 	fp2_add(&B24->z, &B24->z, &B24->z);
 }
 
-static void xeval_2_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ){
+static void xeval_2_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ, ec_point_t K[3]){
 	fp2_t t0, t1;
 	for(int i = 0; i < lenQ; i++){
 		fp2_mul(&t0, &Q[i].x, &Q[i].z);
@@ -143,6 +143,7 @@ int main(int argc, char* argv[])
 
 	// Initial curve with A = 0
 	ec_curve_t E;
+	ec_point_t K[3];
 	fp2_set(&E.A, 0);
 	fp_mont_setone(E.C.re);
 	fp_set(E.C.im, 0);
@@ -540,15 +541,15 @@ int main(int argc, char* argv[])
 
 		// Non-singular 2-isogenies
 		xDBLv2(&P2, &P4, &A24);
-		xisog_2(&B24, P2);
-		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B2, 3);
-		xeval_2(&P2, &P4, 1);
-		xisog_2(&B24, P2);
-		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3);
+		xisog_2(&B24, P2, K);
+		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B2, 3, K);
+		xeval_2(&P2, &P4, 1, K);
+		xisog_2(&B24, P2, K);
+		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3, K);
 
 		// Non-singular 4-isogeny
-		xisog_4(&C24, P4);
-		xeval_4((ec_point_t*)&B1, (ec_point_t*)&B2, 3);
+		xisog_4(&C24, P4, K);
+		xeval_4((ec_point_t*)&B1, (ec_point_t*)&B2, 3, K);
 
 		// Compare results
 		assert(ec_is_equal(&B24, &C24));
@@ -557,15 +558,15 @@ int main(int argc, char* argv[])
 		assert(ec_is_equal(&B0.PmQ, &B1.PmQ));
 
 		// Singular 2-isogenies case 1
-		xisog_2_singular(&B24, A24);
-		xeval_2_singular((ec_point_t*)&B0, (ec_point_t*)&B2, 3);
-		xeval_2_singular(&Q2, &Q4, 1);
-		xisog_2(&B24, Q2);
-		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3);
+		xisog_2_singular(&B24, A24, K);
+		xeval_2_singular((ec_point_t*)&B0, (ec_point_t*)&B2, 3, K);
+		xeval_2_singular(&Q2, &Q4, 1, K);
+		xisog_2(&B24, Q2, K);
+		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3, K);
 
 		// Singular 4-isogeny case 1
-		xisog_4_singular(&C24, Q4, A24);
-		xeval_4_singular((ec_point_t*)&B1, (ec_point_t*)&B2, 3, Q4);
+		xisog_4_singular(&C24, Q4, A24, K);
+		xeval_4_singular((ec_point_t*)&B1, (ec_point_t*)&B2, 3, Q4, K);
 
 		// Compare results
 		assert(ec_is_equal(&B24, &C24));
@@ -580,15 +581,15 @@ int main(int argc, char* argv[])
 		fp2_neg(&B2.P.x, &B2.P.x);
 		fp2_neg(&B2.Q.x, &B2.Q.x);
 		fp2_neg(&B2.PmQ.x, &B2.PmQ.x);
-		xisog_2_singular(&B24, A24);
-		xeval_2_singular((ec_point_t*)&B0, (ec_point_t*)&B2, 3);
-		xeval_2_singular(&Q2, &Q4, 1);
-		xisog_2(&B24, Q2);
-		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3);
+		xisog_2_singular(&B24, A24, K);
+		xeval_2_singular((ec_point_t*)&B0, (ec_point_t*)&B2, 3, K);
+		xeval_2_singular(&Q2, &Q4, 1, K);
+		xisog_2(&B24, Q2, K);
+		xeval_2((ec_point_t*)&B0, (ec_point_t*)&B0, 3, K);
 
 		// Singular 4-isogeny case 2
-		xisog_4_singular(&C24, Q4, A24);
-		xeval_4_singular((ec_point_t*)&B1, (ec_point_t*)&B2, 3, Q4);
+		xisog_4_singular(&C24, Q4, A24, K);
+		xeval_4_singular((ec_point_t*)&B1, (ec_point_t*)&B2, 3, Q4, K);
 
 		// Compare results
 		assert(ec_is_equal(&B24, &C24));
@@ -597,7 +598,7 @@ int main(int argc, char* argv[])
 		assert(ec_is_equal(&B0.PmQ, &B1.PmQ));
 
 		// Move to next curve
-		xisog_4(&A24, P4);
+		xisog_4(&A24, P4, K);
 		fp2_add(&E.A, &A24.x, &A24.x);
 		fp2_sub(&E.A, &E.A, &A24.z);
 		fp2_sub(&E.A, &E.A, &E.A);

@@ -10,7 +10,7 @@ int sI, sJ, sK;	// Sizes of each current I, J, and K
 fp2_t I[sI_max][2],		// I plays also as the linear factors of the polynomial h_I(X)
 			EJ_0[sJ_max][3], EJ_1[sJ_max][3];	// To be used in xisog y xeval
 
-ec_point_t J[sJ_max], K[sK_max];		// Finite subsets of the kernel
+ec_point_t J[sJ_max];		// Finite subsets of the kernel
 fp2_t XZJ4[sJ_max],		// -4* (Xj * Zj) for each j in J, and x([j]P) = (Xj : Zj)
     rtree_A[(1 << (ceil_log_sI_max+2)) - 1],		// constant multiple of the reciprocal tree computation
     A0;			// constant multiple of the reciprocal R0
@@ -26,10 +26,6 @@ int deg_ptree_hI[(1 << (ceil_log_sI_max+1)) - 1],	// degree of each noed in the 
 
 fp2_t leaves[sI_max];		// leaves of the remainder tree, which are required in the Resultant computation
 
-#else
-
-ec_point_t K[3];	
-
 #endif
 
 // -----------------------------------------------------------
@@ -37,7 +33,7 @@ ec_point_t K[3];
 // Traditional Kernel Point computation (KPs)
 
 // Kernel computation required in tye degree-4 isogeny evaluation
-void kps_4(ec_point_t const P)
+void kps_4(ec_point_t const P, ec_point_t K[3])
 {
 	fp2_sub(&K[1].x, &P.x, &P.z);
 	fp2_add(&K[2].x, &P.x, &P.z);
@@ -47,7 +43,7 @@ void kps_4(ec_point_t const P)
 }
 
 // Kernel computation required in the degree-3 isogeny evaluation
-void kps_3(ec_point_t const P)
+void kps_3(ec_point_t const P, ec_point_t K[3])
 {
 	fp2_sub(&K[0].x, &P.x, &P.z);
 	fp2_add(&K[1].x, &P.x, &P.z);
@@ -104,7 +100,7 @@ void yadd(ec_point_t* R, ec_point_t* const P, ec_point_t* const Q, ec_point_t* c
 }
 
 // tvelu formulae
-void kps_t(int i, ec_point_t const P, ec_point_t const A)
+void kps_t(int i, ec_point_t const P, ec_point_t const A, ec_point_t *K)
 {
 	int j;
 	int d = ((int)TORSION_ODD_PRIMES[i] - 1) / 2;
@@ -123,7 +119,7 @@ void kps_t(int i, ec_point_t const P, ec_point_t const A)
 // -----------------------------------------------------------
 // -----------------------------------------------------------
 // Kernel Point computation (KPs) used in velu SQRT
-void kps_s(int i, ec_point_t const P, ec_point_t const A)
+void kps_s(int i, ec_point_t const P, ec_point_t const A, ec_point_t *K)
 {
 	// =================================================================================
 	assert(TORSION_ODD_PRIMES[i] > gap);	// Ensuring velusqrt is used for l_i > gap
