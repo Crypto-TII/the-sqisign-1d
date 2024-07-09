@@ -1,6 +1,11 @@
 #include <protocols.h>
 #include <inttypes.h>
 #include <assert.h>
+#if defined(PARALLEL_SIGNATURE)
+#include <omp.h>
+
+#define PARALLEL_SIGNATURE_NUM_THREADS    5
+#endif
 
 static inline void copy_point(ec_point_t* A, const ec_point_t* B){
     fp2_copy(&A->x, &B->x);
@@ -366,25 +371,28 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
     fp2_copy(&Ein[4].C, &sig->E_3.C);
 
     // Evaluate isogenies
-    // TODO: Parallelize me!
-    for(int core_id = 0; core_id < 5; core_id ++){
+#if defined(PARALLEL_SIGNATURE)
+    omp_set_num_threads(PARALLEL_SIGNATURE_NUM_THREADS);
+    #pragma omp parallel for
+#endif
+    for (int thr_id = 0; thr_id < 5; thr_id++) {
 
         // Get coefficient in (A+2C:4C) form
-        fp2_add(&A24in[core_id].z, &Ein[core_id].C, &Ein[core_id].C);
-        fp2_add(&A24in[core_id].x, &Ein[core_id].A, &A24in[core_id].z);
-        fp2_add(&A24in[core_id].z, &A24in[core_id].z, &A24in[core_id].z);
+        fp2_add(&A24in[thr_id].z, &Ein[thr_id].C, &Ein[thr_id].C);
+        fp2_add(&A24in[thr_id].x, &Ein[thr_id].A, &A24in[thr_id].z);
+        fp2_add(&A24in[thr_id].z, &A24in[thr_id].z, &A24in[thr_id].z);
 
         // Evaluate isogeny
-        ec_eval_even_strategy_parallel(&A24out[core_id][1 - (1 & (core_id!=0))], &A24out[core_id][1 & (core_id!=0)], &K2[core_id], &A24in[core_id], &K[core_id]);
+        ec_eval_even_strategy_parallel(&A24out[thr_id][1 - (1 & (thr_id!=0))], &A24out[thr_id][1 & (thr_id!=0)], &K2[thr_id], &A24in[thr_id], &K[thr_id]);
 
         // Get coefficient in (A:C) form
-        fp2_add(&Eout[core_id].A, &A24out[core_id][0].x, &A24out[core_id][0].x);
-        fp2_sub(&Eout[core_id].A, &Eout[core_id].A, &A24out[core_id][0].z);
-        fp2_add(&Eout[core_id].A, &Eout[core_id].A, &Eout[core_id].A);
-        fp2_copy(&Eout[core_id].C, &A24out[core_id][0].z);
+        fp2_add(&Eout[thr_id].A, &A24out[thr_id][0].x, &A24out[thr_id][0].x);
+        fp2_sub(&Eout[thr_id].A, &Eout[thr_id].A, &A24out[thr_id][0].z);
+        fp2_add(&Eout[thr_id].A, &Eout[thr_id].A, &Eout[thr_id].A);
+        fp2_copy(&Eout[thr_id].C, &A24out[thr_id][0].z);
 
         // Get j-invariant
-        ec_j_inv_proj(&jinv[core_id], &Eout[core_id]);
+        ec_j_inv_proj(&jinv[thr_id], &Eout[thr_id]);
     }
 
     bool pass = true;
