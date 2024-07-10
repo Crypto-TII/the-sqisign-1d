@@ -1,8 +1,6 @@
 #include <assert.h>
 #include <fp.h>
 
-extern modpro(const digit_t* a, digit_t* out);
-
 void fp_set(digit_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize
 
@@ -85,9 +83,4 @@ void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords)
     for (int i = shift_words - 1; i >= 0; i--) {
         x[i] = 0;
     }
-}
-
-void fp_exp3div4(digit_t* out, const digit_t* a)
-{
-    modpro(a, out);
 }

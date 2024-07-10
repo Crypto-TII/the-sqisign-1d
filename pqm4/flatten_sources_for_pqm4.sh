@@ -8,30 +8,30 @@ declare -A M4_ARITHMETIC_SOURCES
 declare -A PRECOMP_GF_DIRS
 
 FIAT_CRYPTO_SOURCES[1]="fp_p1913_32.c"
-FIAT_CRYPTO_SOURCES[1_p248]="fp_p248_32.c"
 FIAT_CRYPTO_SOURCES[1_p248_smart]="fp_p248_32.c"
+FIAT_CRYPTO_SOURCES[1_p248_uncompressed]="fp_p248_32.c"
 FIAT_CRYPTO_SOURCES[3]="fp_p47441_32.c"
 FIAT_CRYPTO_SOURCES[5]="fp_p318233_32.c"
 
 FIAT_CRYPTO_FP2_SOURCES[1]="fp2_p1913.c"
-FIAT_CRYPTO_FP2_SOURCES[1_p248]="fp2_p248.c"
 FIAT_CRYPTO_FP2_SOURCES[1_p248_smart]="fp2_p248.c"
+FIAT_CRYPTO_FP2_SOURCES[1_p248_uncompressed]="fp2_p248.c"
 FIAT_CRYPTO_FP2_SOURCES[3]="fp2_p47441.c"
 FIAT_CRYPTO_FP2_SOURCES[5]="fp2_p318233.c"
 
 M4_ARITHMETIC_SOURCES[1]="fp_p1913_32_m4.c"
-M4_ARITHMETIC_SOURCES[1_p248]="fp_p248_32_m4.c"
 M4_ARITHMETIC_SOURCES[1_p248_smart]="fp_p248_32_m4.c"
+M4_ARITHMETIC_SOURCES[1_p248_uncompressed]="fp_p248_32_m4.c"
 M4_ARITHMETIC_SOURCES[3]="fp_p47441_32_m4.c"
 M4_ARITHMETIC_SOURCES[5]="fp_p318233_32_m4.c"
 
 PRECOMP_GF_DIRS[1]="lvl1"
-PRECOMP_GF_DIRS[1_p248]="lvl1_p248"
 PRECOMP_GF_DIRS[1_p248_smart]="lvl1_p248"
+PRECOMP_GF_DIRS[1_p248_uncompressed]="lvl1_p248"
 PRECOMP_GF_DIRS[3]="lvl3"
 PRECOMP_GF_DIRS[5]="lvl5"
 
-for LEVEL in 1 1_p248 1_p248_smart 3 5
+for LEVEL in 1 1_p248_smart 1_p248_uncompressed 3 5
 do
     for ARITHMETIC in fiat_crypto mikes_arithmetic m4_arithmetic
     do
@@ -49,7 +49,7 @@ do
         cp src/sqisign.c ${DST_PATH}/
 
         cp pqm4/${LVL}/pqm4_api.c ${DST_PATH}/
-        if [ ${LEVEL} = "1_p248_smart" ]; then
+        if [ ${LEVEL} = "1_p248_smart" ] || [ ${LEVEL} = "1_p248_uncompressed" ]; then
             cp pqm4/${LVL}/api.h ${DST_PATH}/
         else
             cp src/nistapi/${LVL}/api.h ${DST_PATH}/
@@ -66,7 +66,7 @@ do
         if [ ${ARITHMETIC} = "fiat_crypto" ]; then
             ARITH_FLAG="ARITH_REF"
 
-            cp src/gf/generic/{inversion.inc,symbol.inc} ${DST_PATH}/
+            cp src/gf/generic/{bn.inc,inversion.inc,symbol.inc} ${DST_PATH}/
             cp src/gf/ref/include/*.h ${DST_PATH}/
             cp src/gf/ref/${PRECOMP_GF_DIRS[${LEVEL}]}/${FIAT_CRYPTO_SOURCES[${LEVEL}]} ${DST_PATH}/
             cp src/gf/ref/${PRECOMP_GF_DIRS[${LEVEL}]}/fp2.c ${DST_PATH}/${FIAT_CRYPTO_FP2_SOURCES[${LEVEL}]}

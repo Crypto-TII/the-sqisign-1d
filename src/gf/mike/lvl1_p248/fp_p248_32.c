@@ -584,6 +584,10 @@ void fp_sqrt(digit_t* a) {
     modsqrt(a, NULL, a);
 }
 
+void fp_exp3div4(digit_t* out, const digit_t* a) {
+    modpro(a, out);
+}
+
 void fp_tomont(digit_t* out, const digit_t* a) {
     nres(a, out);
 }

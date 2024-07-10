@@ -1267,6 +1267,10 @@ void fp_sqrt(digit_t* a) {
     modsqrt_MFP1973_ct(a, NULL, a);
 }
 
+void fp_exp3div4(digit_t* out, const digit_t* a) {
+    modpro_MFP1973_ct(a, out);
+}
+
 void fp_tomont(digit_t* out, const digit_t* a) {
     nres_MFP1973_ct(a, out);
 }

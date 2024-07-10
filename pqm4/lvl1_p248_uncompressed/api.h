@@ -7,7 +7,7 @@
 
 #define CRYPTO_SECRETKEYBYTES  802
 #define CRYPTO_PUBLICKEYBYTES   64
-#define CRYPTO_BYTES           157
+#define CRYPTO_BYTES           320
 
 #define CRYPTO_ALGNAME "lvl1_p248_smart"
 
