@@ -455,8 +455,14 @@ void ec_eval_even_strategy_chal_uncompressed(ec_curve_t* image, ec_point_t* seco
 void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
         ec_point_t* points, unsigned short length){
         
-    ec_point_t ker_plus, ker_minus, P, Kp, A24, B24, K[sK_max];
+    ec_point_t ker_plus, ker_minus, P, Kp, A24, B24;
     int i,j,k;
+
+#if defined(ENABLE_SIGN) && !defined(PQM4)
+    ec_point_t K[sK_max];
+#else
+    ec_point_t K[3];
+#endif
 
     AC_to_A24(&A24, &phi->curve);
 
