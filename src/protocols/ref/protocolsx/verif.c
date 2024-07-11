@@ -1,7 +1,7 @@
 #include <protocols.h>
 #include <inttypes.h>
 #include <assert.h>
-#if defined(PARALLEL_SIGNATURE)
+#if defined(PARALLEL_SIGNATURES_ENABLED)
 #include <omp.h>
 
 #define PARALLEL_SIGNATURE_NUM_THREADS    5
@@ -372,7 +372,7 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
     fp2_copy(&Ein[4].C, &sig->E_3.C);
 
     // Evaluate isogenies
-#if defined(PARALLEL_SIGNATURE)
+#if defined(PARALLEL_SIGNATURES_ENABLED)
     #pragma omp parallel private(thr_id) num_threads(PARALLEL_SIGNATURE_NUM_THREADS)
     {
         thr_id = omp_get_thread_num();
@@ -414,6 +414,103 @@ int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t
     if(!ec_is_equal(&jA, &jinv[1])) pass = false;
     if(!ec_is_equal(&jinv[2], &jinv[3])) pass = false;
     if(!ec_is_equal(&jinv[4], &jinv[0])) pass = false;
+
+    return pass;
+}
+
+
+int protocols_verif_cparallel(const signature_cparallel_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l)
+{
+    ec_point_t A24out[5], alpha[5], jinv[5], K[5], P[5], Q[5], PQ[5], A24[5], push_point;
+    ec_curve_t E[5];
+    ec_isom_t isom;
+    int thr_id;
+
+    // Load domain curves
+    copy_point(&alpha[0], &pk->Pa);
+    copy_point(&alpha[1], &sig->alphas[0]);
+    copy_point(&alpha[2], &sig->alphas[0]);
+    copy_point(&alpha[3], &sig->alphas[1]);
+    copy_point(&alpha[4], &sig->alphas[1]);
+
+    // Generate bases
+    ec_curve_to_implicit_basis_2_smart(&P[0], &Q[0], &pk->Pa);
+    if(sig->zip.bit_first_step == 0){
+        // Swap P and Q
+        copy_point(&PQ[0], &P[0]);
+        copy_point(&P[0], &Q[0]);
+        copy_point(&Q[0], &PQ[0]);
+    }
+    ec_curve_to_implicit_basis_2_smart(&P[2], &Q[2], &sig->alphas[0]);
+    ec_curve_to_implicit_basis_2_smart(&P[4], &Q[4], &sig->alphas[1]);
+    for(int k = 0; k < 3; k++){
+        ec_A24_from_mont_root(&A24[2*k], &alpha[2*k]);
+        for(int i = 0; i < P_LEN; i++){
+            for(int j = 0; j < TORSION_PLUS_ODD_POWERS[i]; j++){
+                xMULdac(&P[2*k], &P[2*k], DACS[i], DAC_LEN[i], &A24[2*k]);
+                xMULdac(&Q[2*k], &Q[2*k], DACS[i], DAC_LEN[i], &A24[2*k]);
+            }
+        }
+        fp2_add(&E[2*k].A, &A24[2*k].x, &A24[2*k].x);
+        fp2_sub(&E[2*k].A, &E[2*k].A, &A24[2*k].z);
+        fp2_add(&E[2*k].A, &E[2*k].A, &E[2*k].A);
+        fp2_copy(&E[2*k].C, &A24[2*k].z);
+        difference_point(&PQ[2*k], &P[2*k], &Q[2*k], &E[2*k]);
+    }
+    copy_point(&P[1], &P[2]);
+    copy_point(&Q[1], &Q[2]);
+    copy_point(&PQ[1], &PQ[2]);
+    copy_point(&A24[1], &A24[2]);
+    copy_point(&P[3], &P[4]);
+    copy_point(&Q[3], &Q[4]);
+    copy_point(&PQ[3], &PQ[4]);
+    copy_point(&A24[3], &A24[4]);
+
+    // Evaluate isogenies
+#if defined(PARALLEL_SIGNATURES_ENABLED)
+    #pragma omp parallel private(thr_id) num_threads(PARALLEL_SIGNATURE_NUM_THREADS)
+    {
+        thr_id = omp_get_thread_num();
+#else
+    for (thr_id = 0; thr_id < 5; thr_id++) {
+#endif
+        if(thr_id == 4){
+            ec_ladder3ptv2(&K[thr_id], sig->s, POWER_OF_2_SECPAR, &P[thr_id], &Q[thr_id], &PQ[thr_id], &A24[thr_id]);
+            copy_point(&push_point, &Q[thr_id]);
+            for(int i = 0; i < POWER_OF_2 - POWER_OF_2_SECPAR; i++){
+                xDBLv2(&K[thr_id], &K[thr_id], &A24[thr_id]);
+                xDBLv2(&push_point, &push_point, &A24[thr_id]);
+            }
+            ec_eval_even_strategy_chal(&E[thr_id], &push_point, &A24[thr_id], &K[thr_id]);
+            fp2_add(&A24[thr_id].z, &E[thr_id].C, &E[thr_id].C);
+            fp2_add(&A24[thr_id].x, &E[thr_id].A, &A24[thr_id].z);
+            fp2_add(&A24[thr_id].z, &A24[thr_id].z, &A24[thr_id].z);
+            xMULv2(&push_point, &push_point, sig->r, POWER_OF_2_SECPAR, &A24[thr_id]);
+            ec_curve_normalize(&E[thr_id], &isom, &E[thr_id]);
+            ec_iso_eval(&push_point, &isom);
+        }
+        else{
+            ec_ladder3ptv2(&K[thr_id], sig->zip.zip_chain[thr_id], POWER_OF_2, &P[thr_id], &Q[thr_id], &PQ[thr_id], &A24[thr_id]);
+            ec_eval_even_strategy_smart(&alpha[thr_id], &A24[thr_id], &A24[thr_id], &K[thr_id]);
+            fp2_add(&E[thr_id].A, &A24[thr_id].x, &A24[thr_id].x);
+            fp2_sub(&E[thr_id].A, &E[thr_id].A, &A24[thr_id].z);
+            fp2_add(&E[thr_id].A, &E[thr_id].A, &E[thr_id].A);
+            fp2_copy(&E[thr_id].C, &A24[thr_id].z);
+            ec_j_inv_proj(&jinv[thr_id], &E[thr_id]);
+        }
+    }
+
+    bool pass = true;
+
+    // Check that the codomain curves connect
+    if(!ec_is_equal(&jinv[0], &jinv[1])) pass = false;
+    if(!ec_is_equal(&jinv[2], &jinv[3])) pass = false;
+
+    // Recompute hash
+    hash_to_challenge_smart(&K[4], &E[4], m, l);
+
+    // Check hash
+    if(!ec_is_equal(&K[4], &push_point)) pass = false;
 
     return pass;
 }

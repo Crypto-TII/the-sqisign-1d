@@ -59,6 +59,9 @@ static int test_sig_kat(int cnt) {
 #elif defined(PARALLEL_SIGNATURE)
     printf("Using parallel-friendly signatures.\n");
     snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_parallel.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#elif defined(CPARALLEL_SIGNATURE)
+    printf("Using compressed parallel-friendly signatures.\n");
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_compressed_parallel.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #else
     printf("Using regular signatures.\n");
     snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
@@ -170,6 +173,8 @@ static int test_sig_kat(int cnt) {
         ret_val = sqisign_open_uncompressed(m1, &mlen1, sm_rsp, smlen, pk_rsp);
 #elif defined(PARALLEL_SIGNATURE)
         ret_val = sqisign_open_parallel(m1, &mlen1, sm_rsp, smlen, pk_rsp);
+#elif defined(CPARALLEL_SIGNATURE)
+        ret_val = sqisign_open_cparallel(m1, &mlen1, sm_rsp, smlen, pk_rsp);
 #else
         ret_val = sqisign_open(m1, &mlen1, sm_rsp, smlen, pk_rsp);
 #endif

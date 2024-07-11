@@ -56,6 +56,17 @@ FOREACH(SVARIANT ${SVARIANT_S})
             target_include_directories(sqisign_test_kat_${SVARIANT}_parallel PRIVATE ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER} ${INC_PUBLIC} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_QUATERNION} ${INC_KLPT} ${INC_GF_${SVARIANT_UPPER}} ${INC_EC} ${INC_COMMON} ${INC_ID2ISO} ${INC_PROTOCOLS})
             target_compile_definitions(sqisign_test_kat_${SVARIANT}_parallel PRIVATE PARALLEL_SIGNATURE)
             add_test(sqisign_test_kat_${SVARIANT}_parallel  sqisign_test_kat_${SVARIANT}_parallel )
+
+            add_executable(sqisign_bench_verif_kat_${SVARIANT}_compressed_parallel bench_verif_kat.c)
+            target_link_libraries(sqisign_bench_verif_kat_${SVARIANT}_compressed_parallel sqisign_${SVARIANT_LOWER})
+            target_include_directories(sqisign_bench_verif_kat_${SVARIANT}_compressed_parallel PUBLIC ${PROJECT_SOURCE_DIR}/src/common ${INC_PUBLIC} ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER})
+            target_compile_definitions(sqisign_bench_verif_kat_${SVARIANT}_compressed_parallel PRIVATE CPARALLEL_SIGNATURE)
+
+            add_executable(sqisign_test_kat_${SVARIANT}_compressed_parallel test_kat.c)
+            target_link_libraries(sqisign_test_kat_${SVARIANT}_compressed_parallel sqisign_${SVARIANT_LOWER}_test)
+            target_include_directories(sqisign_test_kat_${SVARIANT}_compressed_parallel PRIVATE ${PROJECT_SOURCE_DIR}/src/nistapi/${SVARIANT_LOWER} ${INC_PUBLIC} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_QUATERNION} ${INC_KLPT} ${INC_GF_${SVARIANT_UPPER}} ${INC_EC} ${INC_COMMON} ${INC_ID2ISO} ${INC_PROTOCOLS})
+            target_compile_definitions(sqisign_test_kat_${SVARIANT}_compressed_parallel PRIVATE CPARALLEL_SIGNATURE)
+            add_test(sqisign_test_kat_${SVARIANT}_compressed_parallel  sqisign_test_kat_${SVARIANT}_compressed_parallel )
         endif()
 
     else()

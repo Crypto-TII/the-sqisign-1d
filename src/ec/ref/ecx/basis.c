@@ -21,7 +21,7 @@ int ec_is_on_curve(const ec_curve_t* curve, const ec_point_t* P){
     return fp2_is_square(&t0) || fp2_is_zero(&t0);
 }
 
-static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point_t* Q, const ec_curve_t* curve){
+void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point_t* Q, const ec_curve_t* curve){
     // Given P,Q in projective x-only, computes a deterministic choice for (P-Q)
     // Based on Proposition 3 of https://eprint.iacr.org/2017/518.pdf
 

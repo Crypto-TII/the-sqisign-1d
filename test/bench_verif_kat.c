@@ -28,6 +28,8 @@
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + UNCOMPRESSED_SIGNATURE_LEN)
 #elif defined(PARALLEL_SIGNATURE)
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + PARALLEL_SIGNATURE_LEN)
+#elif defined(CPARALLEL_SIGNATURE)
+#define SIGMSG_LEN_MAX    (MSG_LEN_MAX + COMPRESSED_PARALLEL_SIGNATURE_LEN)
 #else
 #define SIGMSG_LEN_MAX    (MSG_LEN_MAX + SIGNATURE_LEN)
 #endif
@@ -129,6 +131,9 @@ static int bench_sig(int runs, int csv)
 #elif defined(PARALLEL_SIGNATURE)
     printf("Using parallel-friendly signatures.\n");
     snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_parallel.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
+#elif defined(CPARALLEL_SIGNATURE)
+    printf("Using compressed parallel-friendly signatures.\n");
+    snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s_compressed_parallel.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
 #else
     printf("Using regular signatures.\n");
     snprintf(fn_rsp, 64, "../../KAT/PQCsignKAT_%d_%s.rsp", CRYPTO_SECRETKEYBYTES, CRYPTO_ALGNAME);
@@ -194,6 +199,8 @@ static int bench_sig(int runs, int csv)
         sqisign_open_uncompressed(m, &mlen, sm, *smlen, pk);
 #elif defined(PARALLEL_SIGNATURE)
         sqisign_open_parallel(m, &mlen, sm, *smlen, pk);
+#elif defined(CPARALLEL_SIGNATURE)
+        sqisign_open_cparallel(m, &mlen, sm, *smlen, pk);
 #else
         sqisign_open(m, &mlen, sm, *smlen, pk);
 #endif

@@ -64,6 +64,13 @@ typedef struct signature_parallel {
     ec_curve_t E_3; // Montgomery coefficient of the third intermediate curve in the response isogeny chain
 } signature_parallel_t;
 
+typedef struct signature_cparallel {
+    id2iso_compressed_long_two_isog_t zip;  /// the compressed isogeny 
+    digit_t r[NWORDS_ORDER];  
+    digit_t s[NWORDS_ORDER];  
+    ec_point_t alphas[2];
+} signature_cparallel_t;
+
 /** @brief Type for the regular public keys
  * 
  * @typedef public_key_t
@@ -300,6 +307,17 @@ int protocols_verif_uncompressed(const signature_uncompressed_t *sig, const publ
     */
 int protocols_verif_parallel(const signature_parallel_t *sig, const public_key_t *pk, const unsigned char* m, size_t l);
 
+/**
+ * @brief Verifying a parallel-friendly smart-sampling-based signature
+ *
+ * @param sig: the signature
+ * @param pk the public key 
+ * @param m the message
+ * @param l length of the message
+ * @returns a bit indicating if the verification succeeded  
+    */
+int protocols_verif_cparallel(const signature_cparallel_t *sig, const public_key_smart_t *pk, const unsigned char* m, size_t l);
+
 
 /** @}
 */
@@ -372,6 +390,14 @@ void signature_encode_uncompressed(unsigned char* enc, const signature_uncompres
 void signature_encode_parallel(unsigned char* enc, const signature_parallel_t* sig);
 
 /**
+ * @brief Encodes a parallel-friendly smart-sampling-based signature as a byte array
+ *
+ * @param enc : Output the encoded signature
+ * @param sig : signature
+    */
+void signature_encode_cparallel(unsigned char* enc, const signature_cparallel_t* sig);
+
+/**
  * @brief Decodes a public key from a byte array
  *
  * @param pk : Output the decoded public key
@@ -429,6 +455,14 @@ void signature_decode_uncompressed(signature_uncompressed_t* sig, const unsigned
  * @param enc : encoded signature
     */
 void signature_decode_parallel(signature_parallel_t* sig, const unsigned char* enc);
+
+/**
+ * @brief Decodes a parallel-friendly smart-sampling-based signature from a byte array
+ *
+ * @param sig : Output the decoded signature
+ * @param enc : encoded signature
+    */
+void signature_decode_cparallel(signature_cparallel_t* sig, const unsigned char* enc);
 
 /** @}
 */

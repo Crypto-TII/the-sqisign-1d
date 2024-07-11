@@ -539,6 +539,28 @@ assert(enc - start == PARALLEL_SIGNATURE_LEN);
 }
 
 /**
+ * @brief Encodes a parallel-friendly smart-smapling-based signature to a byte array
+ *
+ * @param enc Output: encoded signature
+ * @param sig: the signature
+ */
+void signature_encode_cparallel(unsigned char* enc, const signature_cparallel_t* sig)
+{
+unsigned char *const start = enc;
+    id2iso_compressed_long_two_isog_encode(&sig->zip, enc);
+    enc += ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES;
+    encode_digits(enc, sig->r, POWER_OF_2_SECPAR/8);
+    enc += POWER_OF_2_SECPAR/8;
+    encode_digits(enc, sig->s, POWER_OF_2_SECPAR/8);
+    enc += POWER_OF_2_SECPAR/8;
+    ec_point_encode(enc, &sig->alphas[0]);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_encode(enc, &sig->alphas[1]);
+    enc += EC_POINT_ENCODED_BYTES;
+assert(enc - start == COMPRESSED_PARALLEL_SIGNATURE_LEN);
+}
+
+/**
  * @brief Decodes a smart-sampling-based signature from a byte array
  *
  * @param sig Output: the decoded signature
@@ -599,6 +621,30 @@ const unsigned char *const start = enc;
     ec_curve_decode(enc, &sig->E_3);
     enc += EC_CURVE_ENCODED_BYTES;
 assert(enc - start == PARALLEL_SIGNATURE_LEN);
+}
+
+/**
+ * @brief Decodes a parallel-friendly smart-sampling-based signature with from a byte array
+ *
+ * @param sig Output: the decoded signature
+ * @param enc: encoded signature
+ */
+void signature_decode_cparallel(signature_cparallel_t* sig, const unsigned char* enc)
+{
+const unsigned char *const start = enc;
+    id2iso_compressed_long_two_isog_decode(enc, &sig->zip);
+    enc += ID2ISO_COMPRESSED_LONG_TWO_ISOG_BYTES;
+    memset(&sig->r, 0, sizeof(sig->r));
+    decode_digits(sig->r, enc, POWER_OF_2_SECPAR/8, sizeof(sig->r)/sizeof(*sig->r));
+    enc += POWER_OF_2_SECPAR/8;
+    memset(&sig->s, 0, sizeof(sig->s));
+    decode_digits(sig->s, enc, POWER_OF_2_SECPAR/8, sizeof(sig->s)/sizeof(*sig->s));
+    enc += POWER_OF_2_SECPAR/8;
+    ec_point_decode(&sig->alphas[0], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+    ec_point_decode(&sig->alphas[1], enc);
+    enc += EC_POINT_ENCODED_BYTES;
+assert(enc - start == COMPRESSED_PARALLEL_SIGNATURE_LEN);
 }
 
 

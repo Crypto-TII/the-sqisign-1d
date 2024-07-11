@@ -101,6 +101,26 @@ int sqisign_open_parallel(unsigned char *m,
     return ret;
 }
 
+int sqisign_open_cparallel(unsigned char *m,
+              size_t *mlen, const unsigned char *sm,
+              size_t smlen, const unsigned char *pk) { 
+    int ret = 0;
+    public_key_smart_t pkt = { 0 };
+    signature_cparallel_t sigt;
+
+    public_key_decode_smart(&pkt, pk);
+    signature_decode_cparallel(&sigt, sm);
+
+    ret = !protocols_verif_cparallel(&sigt, &pkt, sm + COMPRESSED_PARALLEL_SIGNATURE_LEN, smlen - COMPRESSED_PARALLEL_SIGNATURE_LEN);
+
+    if (!ret) {
+        *mlen = smlen - COMPRESSED_PARALLEL_SIGNATURE_LEN;
+        memmove(m, sm + COMPRESSED_PARALLEL_SIGNATURE_LEN, *mlen);
+    }
+
+    return ret;
+}
+
 int sqisign_open(unsigned char *m,
               size_t *mlen, const unsigned char *sm,
               size_t smlen, const unsigned char *pk) { 
@@ -172,6 +192,21 @@ int sqisign_verify_parallel(const unsigned char *m,
     signature_decode_parallel(&sigt, sig);
 
     ret = !protocols_verif_parallel(&sigt, &pkt, m, mlen);
+    return ret;
+}
+
+int sqisign_verify_cparallel(const unsigned char *m,
+                size_t mlen, const unsigned char *sig,
+                size_t siglen, const unsigned char *pk) {
+
+    int ret = 0;
+    public_key_smart_t pkt = { 0 };
+    signature_cparallel_t sigt;
+
+    public_key_decode_smart(&pkt, pk);
+    signature_decode_cparallel(&sigt, sig);
+
+    ret = !protocols_verif_cparallel(&sigt, &pkt, m, mlen);
     return ret;
 }
 

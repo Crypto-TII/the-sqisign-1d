@@ -342,6 +342,18 @@ void ec_A24_from_mont_root(ec_point_t *A24, const ec_point_t *P2);
 */
 
 /**
+ * @brief Computes the difference of two x-only points
+ *
+ * The algorithm is deterministc
+ *
+ * @param PQ computed point P-Q
+ * @param P a point
+ * @param Q a point
+ * @param curve the curve
+ */
+void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point_t* Q, const ec_curve_t* curve);
+
+/**
  * @brief Generate a Montgomery curve and a 2^f-torsion basis
  *
  * The algorithm is deterministc
