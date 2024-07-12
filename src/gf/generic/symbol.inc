@@ -4,8 +4,12 @@
 
 #ifdef RADIX_32
 typedef int32_t sidigit_t;
+#define CLZ __builtin_clz
+#define CTZ __builtin_ctz
 #elif defined(RADIX_64)
 typedef int64_t sidigit_t;
+#define CLZ __builtin_clzl
+#define CTZ __builtin_ctzl
 #endif
 
 #define SIGN(D)	(((digit_t)D) >> (RADIX - 1))
@@ -18,11 +22,17 @@ typedef int64_t sidigit_t;
 #define LMASK	(MASK(RADIX >> 1))
 #define HMASK	(LMASK << (RADIX >> 1))
 
+#ifdef ARITH_MIKE
+#undef NWORDS_FIELD
+#define NWORDS_FIELD NWORDS_ORDER
+#define NAILS	(RADIX - LIMB)
+#endif
+
 bool fp_is_square(const fp_t a) {
 	sidigit_t ai, bi, ci, di;
 	digit_t n, d, t;
 	digit_t t0[NWORDS_FIELD + 1] = { 0 }, t1[NWORDS_FIELD + 1] = { 0 };
-	digit_t t2[NWORDS_FIELD + 1] = { 0 }, t3[NWORDS_FIELD + 1] = { 0 };
+	digit_t t2[NWORDS_FIELD + 3] = { 0 }, t3[NWORDS_FIELD + 3] = { 0 };
 	unsigned int neg, z, i, j, s = (RADIX >> 1) - 2;
 
 	/* Optimized Pornin's Algorithm by Aleksei Vambol from
@@ -33,8 +43,18 @@ bool fp_is_square(const fp_t a) {
 	}
 
 	/* Convert a from Montgomery form. */
+#ifdef ARITH_MIKE
+	fp_frommont(t2, a);
+	for (size_t i = 0; i < NWORDS_FIELD; i++) {
+		j = (RADIX * i) / LIMB;
+		t0[i] = (t2[j] >> ((NAILS*i) % LIMB)) | ((t2[j+1] & MASK((NAILS*(i+1)))) << (LIMB - ((NAILS*i) % LIMB)));
+	}
+	memcpy(t1, p, NWORDS_FIELD * sizeof(digit_t));
+#else
 	fp_frommont(t0, a);
 	fp_copy(t1, p);
+#endif
+
 	t = 0;
 	j = NWORDS_FIELD;
 
@@ -57,7 +77,7 @@ bool fp_is_square(const fp_t a) {
 					n = (n - d) >> 1;
 					t ^= d ^ (d >> 1);
 				} else {
-					z = __builtin_ctzl(n);
+					z = CTZ(n);
 					t ^= (d ^ (d >> 1)) & (z << 1);
 					n >>= z;
 				}
@@ -65,7 +85,7 @@ bool fp_is_square(const fp_t a) {
 			return ((d == 1) && !(t & 2));
 		}
 
-		z = MIN(__builtin_clzl(t0[j]), __builtin_clzl(t1[j]));
+		z = MIN(CLZ(t0[j]), CLZ(t1[j]));
 		n = t0[j] << z;
 		d = t1[j] << z;
 		if (z > (RADIX >> 1)) {
@@ -92,7 +112,7 @@ bool fp_is_square(const fp_t a) {
 				t ^= d ^ (d >> 1);
 				i -= 1;
 			} else {
-				z = MIN(i, __builtin_ctzl(n));
+				z = MIN(i, CTZ(n));
 				t ^= (d ^ (d >> 1)) & (z << 1);
 				ci = ci << z;
 				di = di << z;
@@ -118,7 +138,11 @@ bool fp_is_square(const fp_t a) {
 		bn_rshs_low(t1, t1, j + 1, s);
 		bn_rshs_low(t0, t3, j + 1, s);
 
-		if (fp_is_zero(t0)) {
+		digit_t r = 0;
+		for (size_t i = 0; i < NWORDS_FIELD; i++) {
+			r |= t0[i];
+		}
+		if (r == 0) {
 			return ((t1[0] == 1) && !(t & 2));
 		}
 

@@ -1274,6 +1274,7 @@ static int modshr(unsigned int n, spint *a) {
 /* API functions calling generated code */
 
 const digit_t p[NWORDS_ORDER] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x4C6174C1, 0x356EA468, 0xC722F669, 0x90AEB751, 0x65BC2E0A, 0x45D10AD6, 0xC6AE604A, 0xAB0871A2, 0x03DF6EEE };
+const digit_t pre[NWORDS_ORDER] = { 0x011d13c6, 0x209507bc, 0x18ede469, 0xd64fb447, 0x59dd54d3, 0xa39a06af, 0x2acfba5a, 0xa4ee313a, 0x2ea814d7, 0x4767febd, 0x196e62ce, 0x222acbe };
 
 bool fp_is_zero(const digit_t* a) {
     return (bool) modis0(a);
@@ -1308,11 +1309,11 @@ void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     modfsb(out);
 }
 
-void fp_inv(digit_t* a) {
+void _fp_inv(digit_t* a) {
     modinv(a, NULL, a);
 }
 
-bool fp_is_square(const digit_t* a) {
+bool _fp_is_square(const digit_t* a) {
     return (bool) modqr(NULL, a);
 }
 
@@ -1357,5 +1358,10 @@ void fp_from_digit_array(digit_t* out, const digit_t* a) {
         out[0] += (digit_t)((unsigned char *) a)[i];
     }
 }
+
+#define LIMB 28
+#include "../../generic/bn.inc"
+#include "../../generic/inversion.inc"
+#include "../../generic/symbol.inc"
 
 #endif

@@ -81,6 +81,12 @@ static sidig_t jumpdivstep(sidig_t m[4], sidig_t delta, digit_t f, digit_t g, in
 	return delta;
 }
 
+#ifdef ARITH_MIKE
+#undef NWORDS_FIELD
+#define NWORDS_FIELD NWORDS_ORDER
+#define NAILS	(RADIX - LIMB)
+#endif
+
 void fp_inv(digit_t* a) {
 	sidig_t m[4], d = -1;
 	/* Compute number of iterations based on modulus size. */
@@ -89,7 +95,7 @@ void fp_inv(digit_t* a) {
 	int loops, i, j = 0, s = RADIX - 2;
 	fp_t t, u0, u1, v0, v1, p01, p11;
 	digit_t t0[NWORDS_FIELD + 1], t1[NWORDS_FIELD + 1];
-	digit_t f[NWORDS_FIELD + 1], g[NWORDS_FIELD + 1], sf, sg;
+	digit_t f[NWORDS_FIELD + 5] = { 0 }, g[NWORDS_FIELD + 3] = { 0 }, sf, sg;
 
 	if (fp_is_zero(a)) {
 		return;
@@ -99,14 +105,21 @@ void fp_inv(digit_t* a) {
 	fp_set(u1, 0);
 	fp_set(v0, 0);
 	fp_set(v1, 0);
-	fp_copy(f, p);
 
+#ifdef ARITH_MIKE
+	fp_frommont(f, a);
+	for (size_t i = 0; i < NWORDS_FIELD; i++) {
+		j = (RADIX * i) / LIMB;
+		g[i] = (f[j] >> ((NAILS*i) % LIMB)) | ((f[j+1] & MASK((NAILS*(i+1)))) << (LIMB - ((NAILS*i) % LIMB)));
+	}
+	memcpy(f, p, NWORDS_FIELD * sizeof(digit_t));
+#else
 	/* Convert a from Montgomery form. */
 	fp_frommont(g, a);
+	fp_copy(f, p);
+#endif
 
-	f[NWORDS_FIELD] = g[NWORDS_FIELD] = 0;
 	d = jumpdivstep(m, d, f[0], g[0], s);
-
 	t0[NWORDS_FIELD] = bn_muls_low(t0, f, 0, m[0], NWORDS_FIELD);
 	t1[NWORDS_FIELD] = bn_muls_low(t1, g, 0, m[1], NWORDS_FIELD);
 	bn_addn_low(t0, t0, t1, NWORDS_FIELD + 1);
@@ -129,11 +142,25 @@ void fp_inv(digit_t* a) {
 
 	fp_copy(p01, v1);
 	fp_copy(p11, u1);
+#ifdef ARITH_MIKE
+	for (size_t i = 0; i < NWORDS_FIELD; i++) {
+		j = (RADIX * i) / LIMB;
+		t[i] = (p01[j] >> ((NAILS*i) % LIMB));
+		if ((j+1) * LIMB < LOG2P) t[i] |= ((p01[j+1] & MASK((NAILS*(i+1)))) << (LIMB - ((NAILS*i) % LIMB)));
+	}
+#endif
 
 	loops = iterations / s;
 	loops = (iterations % s == 0 ? loops - 1 : loops);
 
 	for (i = 1; i < loops; i++) {
+#ifdef ARITH_MIKE
+	for (size_t i = 0; i < NWORDS_FIELD; i++) {
+		j = (RADIX * i) / LIMB;
+		t[i] = (p01[j] >> ((NAILS*i) % LIMB));
+		if ((j+1) * LIMB < LOG2P) t[i] |= ((p01[j+1] & MASK((NAILS*(i+1)))) << (LIMB - ((NAILS*i) % LIMB)));
+	}
+#endif
 		d = jumpdivstep(m, d, f[0] & MASK(s), g[0] & MASK(s), s);
 
 		sf = SIGN(f[NWORDS_FIELD]);
@@ -211,5 +238,19 @@ void fp_inv(digit_t* a) {
 
 	/* Multiply by (precomp * R^j) % p, one for each iteration of the loop,
 	 * one for the constant, one more to be removed by reduction. */
+#ifdef ARITH_MIKE
+	memcpy(f, pre, NWORDS_FIELD * sizeof(digit_t));
+	i = 0;
+	while (f[0] != 0) {
+		g[i++] = f[0] & MASK(LIMB);
+		bn_rshs_low(f, f, NWORDS_FIELD, LIMB);
+	}
+	fp_mul(a, p01, g);
+	for (size_t i = 0; i < NWORDS_FIELD; i++) {
+		j = (RADIX * i) / LIMB;
+		g[i] = (a[j] >> ((NAILS*i) % LIMB)) | ((a[j+1] & MASK((NAILS*(i+1)))) << (LIMB - ((NAILS*i) % LIMB)));
+	}
+#else
 	fp_mul(a, p01, pre);
+#endif
 }

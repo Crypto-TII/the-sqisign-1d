@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <fp.h>
 
+extern const digit_t p[], pre[];
+
 void fp_set(digit_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize
 
