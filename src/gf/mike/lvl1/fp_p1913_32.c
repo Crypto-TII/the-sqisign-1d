@@ -861,8 +861,14 @@ void fp_from_digit_array(digit_t* out, const digit_t* a) {
 }
 
 #define LIMB 29
+#ifdef PQM4
+#include "bn.inc"
+#include "inversion.inc"
+#include "symbol.inc"
+#else
 #include "../../generic/bn.inc"
 #include "../../generic/inversion.inc"
 #include "../../generic/symbol.inc"
+#endif
 
 #endif

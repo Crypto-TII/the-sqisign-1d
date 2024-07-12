@@ -74,6 +74,7 @@ do
         elif [ ${ARITHMETIC} = "mikes_arithmetic" ]; then
             ARITH_FLAG="ARITH_MIKE"
     
+            cp src/gf/generic/{bn.inc,inversion.inc,symbol.inc} ${DST_PATH}/
             cp src/gf/mike/gfx/*.c ${DST_PATH}/
             cp src/gf/mike/include/*.h ${DST_PATH}/
             cp src/gf/mike/${PRECOMP_GF_DIRS[${LEVEL}]}/*.c ${DST_PATH}/
