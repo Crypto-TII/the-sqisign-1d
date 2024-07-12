@@ -2922,7 +2922,8 @@ static void modimp_MFP318233_ct(const char *b, spint *a) {
 
 /* API functions calling generated code */
 
-const digit_t p[NWORDS_ORDER] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xA6E1FFFF, 0x994C68AD, 0x781974CE, 0xFAF0A29A, 0x4A0DEA65, 0xFE3AC590, 0x26507D01, 0x02BDBE63, 0x6936E792, 0x8C15B003, 0xA8869BC6, 0x00255946 };
+const digit_t p[NWORDS_FIELD] =  { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xA6E1FFFF, 0x994C68AD, 0x781974CE, 0xFAF0A29A, 0x4A0DEA65, 0xFE3AC590, 0x26507D01, 0x02BDBE63, 0x6936E792, 0x8C15B003, 0xA8869BC6, 0x00255946 };
+const digit_t pre[NWORDS_FIELD] = { 0x9EE85D1D, 0x640F3267, 0x77C81AF6, 0xFE228DB5, 0x1CF87CD4, 0x7CED1891, 0x5D69292E, 0xD6C85A4E, 0x14D3B0BF, 0xEE632C35, 0x719A2FAD, 0xA3B39266, 0xE267D0B9, 0x01E72F81, 0x65541D1A, 0x3EADA };
 
 bool fp_is_zero(const digit_t* a) {
     return (bool) modis0_MFP318233_ct(a);
@@ -2957,14 +2958,6 @@ void fp_sqr(digit_t* out, const digit_t* a) {
 void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     modmul_MFP318233_ct(a, b, out);
     modfsb_MFP318233_ct(out);
-}
-
-void fp_inv(digit_t* a) {
-    modinv_MFP318233_ct(a, NULL, a);
-}
-
-bool fp_is_square(const digit_t* a) {
-    return (bool) modqr_MFP318233_ct(NULL, a);
 }
 
 void fp_sqrt(digit_t* a) {
@@ -3008,5 +3001,15 @@ void fp_from_digit_array(digit_t* out, const digit_t* a) {
         out[0] += (digit_t)((unsigned char *) a)[i];
     }
 }
+
+#ifdef PQM4
+#include "bn.inc"
+#include "inversion.inc"
+#include "symbol.inc"
+#else
+#include "../../generic/bn.inc"
+#include "../../generic/inversion.inc"
+#include "../../generic/symbol.inc"
+#endif
 
 #endif

@@ -979,7 +979,8 @@ static void modimp_MFP248_ct(const char *b, spint *a) {
 
 /* API functions calling generated code */
 
-const digit_t p[NWORDS_ORDER] =  { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,0xffffffff, 0x04ffffff};
+const digit_t p[NWORDS_FIELD] =  { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,0xffffffff, 0x04ffffff};
+const digit_t pre[NWORDS_FIELD] = { 0xd441b778, 0x86b4b5bd, 0x69c1878d, 0xbea87c37, 0x34ef11ef, 0xba9109a9, 0xdd00b817, 0x00efabb8 };
 
 bool fp_is_zero(const digit_t* a) {
     return (bool) modis0_MFP248_ct(a);
@@ -1014,14 +1015,6 @@ void fp_sqr(digit_t* out, const digit_t* a) {
 void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     modmul_MFP248_ct(a, b, out);
     modfsb_MFP248_ct(out);
-}
-
-void fp_inv(digit_t* a) {
-    modinv_MFP248_ct(a, NULL, a);
-}
-
-bool fp_is_square(const digit_t* a) {
-    return (bool) modqr_MFP248_ct(NULL, a);
 }
 
 void fp_sqrt(digit_t* a) {
@@ -1065,5 +1058,15 @@ void fp_from_digit_array(digit_t* out, const digit_t* a) {
         out[0] += (digit_t)((unsigned char *) a)[i];
     }
 }
+
+#ifdef PQM4
+#include "bn.inc"
+#include "inversion.inc"
+#include "symbol.inc"
+#else
+#include "../../generic/bn.inc"
+#include "../../generic/inversion.inc"
+#include "../../generic/symbol.inc"
+#endif
 
 #endif

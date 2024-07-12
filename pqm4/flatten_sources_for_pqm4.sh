@@ -63,10 +63,11 @@ do
             cp src/precomp/ref/${PRECOMP_GF_DIRS[${LEVEL}]}/${FILE} ${DST_PATH}/
         done
 
+        cp src/gf/generic/{bn.inc,inversion.inc,symbol.inc} ${DST_PATH}/
+
         if [ ${ARITHMETIC} = "fiat_crypto" ]; then
             ARITH_FLAG="ARITH_REF"
 
-            cp src/gf/generic/{bn.inc,inversion.inc,symbol.inc} ${DST_PATH}/
             cp src/gf/ref/include/*.h ${DST_PATH}/
             cp src/gf/ref/${PRECOMP_GF_DIRS[${LEVEL}]}/${FIAT_CRYPTO_SOURCES[${LEVEL}]} ${DST_PATH}/
             cp src/gf/ref/${PRECOMP_GF_DIRS[${LEVEL}]}/fp2.c ${DST_PATH}/${FIAT_CRYPTO_FP2_SOURCES[${LEVEL}]}
@@ -74,7 +75,6 @@ do
         elif [ ${ARITHMETIC} = "mikes_arithmetic" ]; then
             ARITH_FLAG="ARITH_MIKE"
     
-            cp src/gf/generic/{bn.inc,inversion.inc,symbol.inc} ${DST_PATH}/
             cp src/gf/mike/gfx/*.c ${DST_PATH}/
             cp src/gf/mike/include/*.h ${DST_PATH}/
             cp src/gf/mike/${PRECOMP_GF_DIRS[${LEVEL}]}/*.c ${DST_PATH}/
