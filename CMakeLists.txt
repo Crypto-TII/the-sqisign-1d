@@ -14,7 +14,7 @@ option(ENABLE_CT_TESTING  "Enable compilation for constant time testing." OFF)
 option(ENABLE_GMP_BUILD "Download and build external version of GMP" OFF)
 option(ENABLE_MINI_GMP "Build with mini-gmp library" OFF)
 option(ENABLE_SIGN "Build with sign functionality" ON)
-option(ENABLE_PARALLEL_SIGNATURE "Enable verification with OpenMP of parallel-friendly signatures for the applicable variants" OFF)
+option(ENABLE_PARALLEL_SIGNATURE "Enable verification with OpenMP of parallel-friendly signatures for the applicable variants" ON)
 option(ENABLE_DOC_TARGET "Enable building API documentation using doxygen" OFF)
 
 if (NOT DEFINED SQISIGN_BUILD_TYPE)
