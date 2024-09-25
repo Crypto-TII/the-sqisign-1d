@@ -139,7 +139,7 @@ void fp_exp3div4(digit_t* out, const digit_t* a)
     // Optimized implementation for p248
 
     // Addition chain for p248
-    // (p248 - 3) div 4 = 2^248 + 2^246 - 1
+    // (p248 - 3) / 4 = 2^248 + 2^246 - 1
     // Cost: 247 SQR + 12 MUL
     fp_t acc, acct, acc1, acc3, acc12;
 
@@ -271,10 +271,24 @@ bool _fp_is_square(const digit_t* a)
 
 void fp_sqrt(digit_t* a)
 { // Square root computation, out = a^((p+1)/4) mod p
+#if defined(PRIME_P248)
+    // (p248 + 1) / 4 = 2^248 + 2^246
+    fp_t out, acc;
+
+    fp_sqr(out, a);
+    for (int i = 0; i < 245; i++) {
+        fp_sqr(out, out);
+    }
+
+    fp_sqr(acc, out);
+    fp_sqr(acc, acc);
+    fp_mul(a, out, acc);
+#else
     fp_t t;
 
     fp_exp3div4(t, a);
     fp_mul(a, t, a);    // a^((p+1)/4)
+#endif
 }
 
 void fp_to_digit_array(digit_t* out, const digit_t* a) {

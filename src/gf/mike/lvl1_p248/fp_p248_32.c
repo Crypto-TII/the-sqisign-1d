@@ -381,50 +381,44 @@ static void modnsqr(spint *a, int n) {
 
 // Calculate progenitor
 static void modpro(const spint *w, spint *z) {
-  spint x[9];
   spint t0[9];
   spint t1[9];
   spint t2[9];
   spint t3[9];
   spint t4[9];
-  modcpy(w, x);
-  modsqr(x, z);
-  modmul(x, z, t0);
-  modsqr(t0, z);
-  modmul(x, z, z);
-  modsqr(z, t1);
-  modsqr(t1, t3);
-  modsqr(t3, t2);
-  modcpy(t2, t4);
-  modnsqr(t4, 3);
-  modmul(t2, t4, t2);
-  modcpy(t2, t4);
-  modnsqr(t4, 6);
-  modmul(t2, t4, t2);
-  modcpy(t2, t4);
-  modnsqr(t4, 2);
-  modmul(t3, t4, t3);
-  modnsqr(t3, 13);
-  modmul(t2, t3, t2);
-  modcpy(t2, t3);
-  modnsqr(t3, 27);
-  modmul(t2, t3, t2);
-  modmul(z, t2, z);
-  modcpy(z, t2);
-  modnsqr(t2, 4);
-  modmul(t1, t2, t1);
+  modcpy(w,t1);
+  modsqr(t1,t0);
   modmul(t0, t1, t0);
-  modmul(t1, t0, t1);
-  modmul(t0, t1, t0);
-  modmul(t1, t0, t2);
-  modmul(t0, t2, t0);
-  modmul(t1, t0, t1);
-  modnsqr(t1, 63);
-  modmul(t0, t1, t1);
-  modnsqr(t1, 64);
-  modmul(t0, t1, t0);
-  modnsqr(t0, 57);
-  modmul(z, t0, z);
+  modsqr(t0, t0);
+  modmul(t0, t1, t3);
+  modcpy(t3, t2);
+  modnsqr(t2, 3);
+  modmul(t2, t3, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 6);
+  modmul(t2, t0, t4);
+  modcpy(t4, t2);
+  modnsqr(t2, 12);
+  modmul(t2, t4, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 24);
+  modmul(t2, t0, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 12);
+  modmul(t2, t4, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 60);
+  modmul(t2, t0, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 3);
+  modmul(t2, t3, t0);
+  modcpy(t0, t2);
+  modnsqr(t2, 123);
+  modmul(t2, t0, t2);
+  modmul(t2, w, t0);
+  modsqr(t0, t0);
+  modsqr(t0, t0);
+  modmul(t2, t0, z);
 }
 
 // calculate inverse, provide progenitor h if available
@@ -524,12 +518,17 @@ static void modsqrt(const spint *x, const spint *h, spint *r) {
   spint s[9];
   spint y[9];
   if (h == NULL) {
-    modpro(x, y);
+    // (p248 + 1) / 4 = 2^248 + 2^246
+    modcpy(x, y);
+    modnsqr(y, 246);
+    modcpy(y, s);
+    modnsqr(s, 2);
+    modmul(y, s, r);
   } else {
     modcpy(h, y);
+    modmul(y, x, s);
+    modcpy(s, r);
   }
-  modmul(y, x, s);
-  modcpy(s, r);
 }
 
 // shift left by less than a word

@@ -170,6 +170,11 @@ void fp2_sqrt(fp2_t* x)
         memcpy((digit_t*)x->re, (digit_t*)re, NWORDS_FIELD*RADIX/8);
         memcpy((digit_t*)x->im, (digit_t*)im, NWORDS_FIELD*RADIX/8);
     } else {
+#if defined(PRIME_P248)
+        memcpy((digit_t*)x->re, (digit_t*)im, NWORDS_FIELD*RADIX/8);
+        fp_neg(re, re);
+        memcpy((digit_t*)x->im, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+#else
         if (fp_is_square(x->im)) {
             memcpy((digit_t*)x->im, (digit_t*)re, NWORDS_FIELD*RADIX/8);
             fp_neg(im, im);
@@ -179,6 +184,7 @@ void fp2_sqrt(fp2_t* x)
             fp_neg(re, re);
             memcpy((digit_t*)x->im, (digit_t*)re, NWORDS_FIELD*RADIX/8);
         }
+#endif
     }
 }
 
