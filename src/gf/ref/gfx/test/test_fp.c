@@ -248,6 +248,18 @@ bool fp_run()
     printf("  GF(p) multiplication runs in .................................... %7lld cycles", cycles/BENCH_LOOPS);
     printf("\n");
 
+    // GF(p) square
+    cycles = 0;
+    cycles1 = cpucycles();
+    for (n=0; n<BENCH_LOOPS; n++)
+    {
+        fp_sqr(c[n], a[n]);
+    }
+    cycles2 = cpucycles();  
+    cycles = cycles+(cycles2-cycles1);
+    printf("  GF(p) squaring runs in .......................................... %7lld cycles", cycles/BENCH_LOOPS);
+    printf("\n");
+    
     // GF(p) inversion
     cycles = 0;
     cycles1 = cpucycles();
