@@ -11,6 +11,7 @@ p_plus_1: .quad 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x05
 
 .global fp_add
 fp_add:
+  push   r12  
   xor    rax, rax
   mov    r8, [rsi]
   mov    r9, [rsi+8]
@@ -20,28 +21,35 @@ fp_add:
   adc    r9, [rdx+8] 
   adc    r10, [rdx+16] 
   adc    r11, [rdx+24] 
-  add    r8, 0x01
-  adc    r9, 0
-  adc    r10, 0
-  adc    r11, 0
-  mov    rdx, [rip+p_plus_1+24]
+  mov    r12, [rip+p]
+  sub    r8, r12
+  mov    rcx, [rip+p+8]
+  sbb    r9, rcx
+  mov    rsi, [rip+p+16]
+  sbb    r10, rsi
+  mov    rdx, [rip+p+24]
   sbb    r11, rdx
   sbb    rax, 0
   
-  mov    rdx, [rip+p+24]
+  and    r12, rax
+  and    rcx, rax
+  and    rsi, rax
   and    rdx, rax
-  add    r8, rax  
-  adc    r9, rax  
-  adc    r10, rax  
+  
+  add    r8, r12  
+  adc    r9, rcx  
+  adc    r10, rsi  
   adc    r11, rdx 
   mov    [rdi], r8
   mov    [rdi+8], r9 
   mov    [rdi+16], r10 
   mov    [rdi+24], r11
+  pop    r12
   ret
 
 .global fp_sub
 fp_sub:
+  push   r12  
   xor    rax, rax
   mov    r8, [rsi]
   mov    r9, [rsi+8]
@@ -53,16 +61,23 @@ fp_sub:
   sbb    r11, [rdx+24]
   sbb    rax, 0
   
+  mov    r12, [rip+p]
+  mov    rcx, [rip+p+8]
+  mov    rsi, [rip+p+16]
   mov    rdx, [rip+p+24]
+  and    r12, rax
+  and    rcx, rax
+  and    rsi, rax
   and    rdx, rax  
-  add    r8, rax  
-  adc    r9, rax
-  adc    r10, rax  
+  add    r8, r12  
+  adc    r9, rcx 
+  adc    r10, rsi  
   adc    r11, rdx 
   mov    [rdi], r8
   mov    [rdi+8], r9 
   mov    [rdi+16], r10 
   mov    [rdi+24], r11 
+  pop    r12
   ret
   
 ///////////////////////////////////////////////////////////////// MACROS
@@ -103,13 +118,6 @@ fp_sub:
     adox   \Z3, \T0
     adc    \Z3, 0   
 .endm
-
-.macro MULADD64x64 M1, Z0, Z1, Z2, Z3, T0, T1
-    mulx   \T0, \T1, \M1     // A0*B0
-    xor    rax, rax
-    adox   \Z2, \T1
-    adox   \Z3, \T0
-.endm
   
 //***********************************************************************
 //  Multiplication in GF(p^2), non-complex part
@@ -127,8 +135,8 @@ fp2_mul_c0:
 	
 	// [rdi0:3] <- p - b1
 	mov    r8, [rip+p]  
-	mov    r9, r8 
-	mov    r10, r8
+	mov    r9, [rip+p+8]   
+	mov    r10, [rip+p+16]
 	mov    r11, [rip+p+24] 
 	mov    rax, [rcx+32]
 	mov    rdx, [rcx+40]        
@@ -159,7 +167,7 @@ fp2_mul_c0:
     MULADD64x256 [rsi+32], r8, r9, r10, r11, r12, r13, r14, rax
     // [r9:r12] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r8                 // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r9, r10, r11, r12, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r9, r10, r11, r12, r13, r14
     
     // [r9:r12, r8] <- z = a0 x b01 - a1 x b11 + z 
     mov    rdx, [rcx+8]
@@ -168,7 +176,7 @@ fp2_mul_c0:
     MULADD64x256 [rsi+32], r9, r10, r11, r12, r8, r13, r14, rax
     // [r10:r12, r8] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r9                 // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r10, r11, r12, r8, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r10, r11, r12, r8, r13, r14
     
     // [r10:r12, r8:r9] <- z = a0 x b02 - a1 x b12 + z 
     mov    rdx, [rcx+16]
@@ -177,7 +185,7 @@ fp2_mul_c0:
     MULADD64x256 [rsi+32], r10, r11, r12, r8, r9, r13, r14, rax
     // [r11:r12, r8:r9] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r10                // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r11, r12, r8, r9, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r11, r12, r8, r9, r13, r14
     
     // [r11:r12, r8:r10] <- z = a0 x b03 - a1 x b13 + z 
     mov    rdx, [rcx+24]
@@ -186,22 +194,26 @@ fp2_mul_c0:
     MULADD64x256 [rsi+32], r11, r12, r8, r9, r10, r13, r14, rax
     // [r12, r8:r10] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r11                // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r12, r8, r9, r10, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r12, r8, r9, r10, r13, r14
 
-	// Final correction   
-    add    r12, 0x01
-    adc    r8, 0
-    adc    r9, 0
-    adc    r10, 0
-    mov    rdx, [rip+p_plus_1+24]
-    sbb    r10, rdx
-    sbb    rax, 0  
-    mov    rdx, [rip+p+24]
-    and    rdx, rax
-    add    r12, rax  
-    adc    r8, rax  
-    adc    r9, rax
-    adc    r10, rdx
+	// Final correction                        
+	mov    rsi, [rip+p]
+	mov    rcx, [rip+p+8]
+	mov    rdx, [rip+p+16]
+	mov    r11, [rip+p+24]
+	sub    r12, rsi
+	sbb    r8, rcx
+	sbb    r9, rdx
+	sbb    r10, r11
+	sbb    rax, 0
+	and    rsi, rax
+	and    rcx, rax
+	and    rdx, rax
+	and    r11, rax
+	add    r12, rsi
+	adc    r8, rcx
+	adc    r9, rdx
+	adc    r10, r11
     
     mov    [rdi], r12          
     mov    [rdi+8], r8         
@@ -242,7 +254,7 @@ fp2_mul_c1:
     MULADD64x256 [rsi+32], r8, r9, r10, r11, r12, r13, r14, rax
     // [r9:r12] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r8                 // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r9, r10, r11, r12, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r9, r10, r11, r12, r13, r14
     
     // [r9:r12, r8] <- z = a0 x b01 - a1 x b11 + z 
     mov    rdx, [rcx+40]
@@ -251,7 +263,7 @@ fp2_mul_c1:
     MULADD64x256 [rsi+32], r9, r10, r11, r12, r8, r13, r14, rax
     // [r10:r12, r8] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r9                 // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r10, r11, r12, r8, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r10, r11, r12, r8, r13, r14
     
     // [r10:r12, r8:r9] <- z = a0 x b02 - a1 x b12 + z 
     mov    rdx, [rcx+48]
@@ -260,7 +272,7 @@ fp2_mul_c1:
     MULADD64x256 [rsi+32], r10, r11, r12, r8, r9, r13, r14, rax
     // [r11:r12, r8:r9] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r10                // rdx <- z0 
-    MULADD64x64 [rip+p_plus_1+24], r11, r12, r8, r9, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r11, r12, r8, r9, r13, r14
     
     // [r11:r12, r8:r10] <- z = a0 x b03 - a1 x b13 + z 
     mov    rdx, [rcx+56]
@@ -269,22 +281,26 @@ fp2_mul_c1:
     MULADD64x256 [rsi+32], r11, r12, r8, r9, r10, r13, r14, rax
     // [r12, r8:r10] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, r11                // rdx <- z0 
-   MULADD64x64 [rip+p_plus_1+24], r12, r8, r9, r10, r13, r14
+    MULADD64x192 [rip+p_plus_1+8], r12, r8, r9, r10, r13, r14
 
-	// Final correction    
-    add    r12, 0x01
-    adc    r8, 0
-    adc    r9, 0
-    adc    r10, 0
-    mov    rdx, [rip+p_plus_1+24]
-    sbb    r10, rdx
-    sbb    rax, 0  
-    mov    rdx, [rip+p+24]
-    and    rdx, rax
-    add    r12, rax  
-    adc    r8, rax  
-    adc    r9, rax
-    adc    r10, rdx
+	// Final correction                        
+	mov    rsi, [rip+p]
+	mov    rcx, [rip+p+8]
+	mov    rdx, [rip+p+16]
+	mov    r11, [rip+p+24]
+	sub    r12, rsi
+	sbb    r8, rcx
+	sbb    r9, rdx
+	sbb    r10, r11
+	sbb    rax, 0
+	and    rsi, rax
+	and    rcx, rax
+	and    rdx, rax
+	and    r11, rax
+	add    r12, rsi
+	adc    r8, rcx
+	adc    r9, rdx
+	adc    r10, r11
     
     mov    [rdi], r12          
     mov    [rdi+8], r8         
@@ -306,28 +322,28 @@ fp2_mul_c1:
 .macro FPMUL256x256 M0, M1, Z0, Z1, Z2, Z3, Z4, T0, T1           
     // [Z1:Z4] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, \Z0                 // rdx <- z0
-    MULADD64x64 [rip+p_plus_1+24], \Z1, \Z2, \Z3, \Z4, \T0, \T1
+    MULADD64x192 [rip+p_plus_1+8], \Z1, \Z2, \Z3, \Z4, \T0, \T1
     
     // [Z1:Z4, Z0] <- z = a01 x a1 + z 
     mov    rdx, 8\M0
     MULADD64x256 \M1, \Z1, \Z2, \Z3, \Z4, \Z0, \T0, \T1, \Z0
     // [Z2:Z4, Z0] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, \Z1                 // rdx <- z0
-    MULADD64x64 [rip+p_plus_1+24], \Z2, \Z3, \Z4, \Z0, \T0, \T1
+    MULADD64x192 [rip+p_plus_1+8], \Z2, \Z3, \Z4, \Z0, \T0, \T1
     
     // [Z2:Z4, Z0:Z1] <- z = a02 x a1 + z  
     mov    rdx, 16\M0
     MULADD64x256 \M1, \Z2, \Z3, \Z4, \Z0, \Z1, \T0, \T1, \Z1
     // [Z3:Z4, Z0:Z1] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, \Z2                // rdx <- z0
-    MULADD64x64 [rip+p_plus_1+24], \Z3, \Z4, \Z0, \Z1, \T0, \T1
+    MULADD64x192 [rip+p_plus_1+8], \Z3, \Z4, \Z0, \Z1, \T0, \T1
     
     // [Z3:Z4, Z0:Z2] <- z = a03 x a1 + z
     mov    rdx, 24\M0
     MULADD64x256 \M1, \Z3, \Z4, \Z0, \Z1, \Z2, \T0, \T1, \Z2
     // [Z4, Z0:Z2] <- z = (z0 x p_plus_1 + z)/2^64
     mov    rdx, \Z3                // rdx <- z0
-    MULADD64x64 [rip+p_plus_1+24], \Z4, \Z0, \Z1, \Z2, \T0, \T1
+    MULADD64x192 [rip+p_plus_1+8], \Z4, \Z0, \Z1, \Z2, \T0, \T1
 .endm
 
 //***********************************************************************
@@ -364,10 +380,9 @@ fp2_sq_c0:
 	sbb    r10, [rsi+40]
 	sbb    r12, [rsi+48] 
 	sbb    r13, [rsi+56]
-	mov    rax, [rip+p]   
-	add    r8, rax                    
-	adc    r10, rax
-	adc    r12, rax
+	add    r8, [rip+p]                    
+	adc    r10, [rip+p+8]
+	adc    r12, [rip+p+16]
 	adc    r13, [rip+p+24]
 	mov    [rdi+32], r8               
 	mov    [rdi+40], r10 
@@ -387,20 +402,24 @@ fp2_sq_c0:
 
     FPMUL256x256 [rdi], [rdi+32], r8, r9, r10, r11, r12, r13, rcx
 
-	// Final correction    
-    add    r12, 0x01
-    adc    r8, 0
-    adc    r9, 0
-    adc    r10, 0
-    mov    rdx, [rip+p_plus_1+24]
-    sbb    r10, rdx
-    sbb    rax, 0  
-    mov    rdx, [rip+p+24]
-    and    rdx, rax
-    add    r12, rax  
-    adc    r8, rax  
-    adc    r9, rax
-    adc    r10, rdx
+	// Final correction                        
+	mov    rsi, [rip+p]
+	mov    rcx, [rip+p+8]
+	mov    rdx, [rip+p+16]
+	mov    r11, [rip+p+24]
+	sub    r12, rsi
+	sbb    r8, rcx
+	sbb    r9, rdx
+	sbb    r10, r11
+	sbb    rax, 0
+	and    rsi, rax
+	and    rcx, rax
+	and    rdx, rax
+	and    r11, rax
+	add    r12, rsi
+	adc    r8, rcx
+	adc    r9, rdx
+	adc    r10, r11
     
     mov    [rdi], r12          
     mov    [rdi+8], r8         
@@ -446,22 +465,26 @@ fp2_sq_c1:
     adox   r12, rax 
 
 	FPMUL256x256 [rsp], [rsi+32], r8, r9, r10, r11, r12, r13, rcx
-	add    rsp, 32    
+	add    rsp, 32
 
-	// Final correction    
-    add    r12, 0x01
-    adc    r8, 0
-    adc    r9, 0
-    adc    r10, 0
-    mov    rdx, [rip+p_plus_1+24]
-    sbb    r10, rdx
-    sbb    rax, 0  
-    mov    rdx, [rip+p+24]
-    and    rdx, rax
-    add    r12, rax  
-    adc    r8, rax  
-    adc    r9, rax
-    adc    r10, rdx
+	// Final correction                        
+	mov    rsi, [rip+p]
+	mov    rcx, [rip+p+8]
+	mov    rdx, [rip+p+16]
+	mov    r11, [rip+p+24]
+	sub    r12, rsi
+	sbb    r8, rcx
+	sbb    r9, rdx
+	sbb    r10, r11
+	sbb    rax, 0
+	and    rsi, rax
+	and    rcx, rax
+	and    rdx, rax
+	and    r11, rax
+	add    r12, rsi
+	adc    r8, rcx
+	adc    r9, rdx
+	adc    r10, r11
     
     mov    [rdi], r12          
     mov    [rdi+8], r8         
@@ -496,24 +519,28 @@ fp_mul:
     adox   r11, r13
     adox   r12, rax 
 
-	FPMUL256x256 [rcx], [rsi], r8, r9, r10, r11, r12, r13, r14    
+	FPMUL256x256 [rcx], [rsi], r8, r9, r10, r11, r12, r13, r14
 
-	// Final correction   
-    add    r12, 0x01
-    adc    r8, 0
-    adc    r9, 0
-    adc    r10, 0
-    mov    rdx, [rip+p_plus_1+24]
-    sbb    r10, rdx
-    sbb    rax, 0  
-    mov    rdx, [rip+p+24]
-    and    rdx, rax
-    add    r12, rax  
-    adc    r8, rax  
-    adc    r9, rax
-    adc    r10, rdx
+	// Final correction                        
+	mov    rsi, [rip+p]
+	mov    rcx, [rip+p+8]
+	mov    rdx, [rip+p+16]
+	mov    r11, [rip+p+24]
+	sub    r12, rsi
+	sbb    r8, rcx
+	sbb    r9, rdx
+	sbb    r10, r11
+	sbb    rax, 0
+	and    rsi, rax
+	and    rcx, rax
+	and    rdx, rax
+	and    r11, rax
+	add    r12, rsi
+	adc    r8, rcx
+	adc    r9, rdx
+	adc    r10, r11
     
-    mov    [rdi], r12        
+    mov    [rdi], r12          
     mov    [rdi+8], r8         
     mov    [rdi+16], r9         
     mov    [rdi+24], r10  
