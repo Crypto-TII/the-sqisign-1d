@@ -2,7 +2,7 @@
 
 This is a fork of the NIST submission of SQIsign, available at https://github.com/SQISign/the-sqisign - it is advisable to read the README of this repository.
 
-This library implements several arithmetic improvements and the 4 verification variants described in (XXX) for a new level-1 prime called p248, as well as an optimization of the entire protocol for the original parameter sets.
+This library implements several arithmetic improvements and the 4 verification variants described in https://eprint.iacr.org/2024/1563 for a new level-1 prime called p248, as well as an optimization of the entire protocol for the original parameter sets.
 
 In addition to the reference (fiat-crypto) and optimized (Broadwell assembly) arithmetic options of the original library, we integrate the portable C arithmetic of Mike Scott (https://eprint.iacr.org/2024/779). We also integrate with pqm4 (https://eprint.iacr.org/2024/112), using optimised assembly code for the Cortex M4.
 
@@ -68,8 +68,14 @@ cd test
 ./sqisign_bench_verif_kat_lvl1_p248_parallel_uncompressed 100
 ```
 
-## PQM4
-Several modifications are needed to run with pqm4, including flattening the entire directory structure and selecting only part of the source files. This process is automatized by navigating to the `pqm4` directory and running the `flatten_sources_for_pqm4.sh` script. Refer to https://github.com/mupq/pqm4 for further instructions.
+## pqm4
+
+Several modifications are needed to run with pqm4, including flattening the entire directory structure and selecting only the needed source files.
+
+This process is automated by running the script `pqm4/flatten_sources_for_pqm4.sh` script, from the root folder of the repository. It creates several folders starting with `sqisign`, which are to be copied to the `mupq/crypto_sign` folder of the pqm4 repository.
+
+A fork of pqm4 incorporating the required changes is available at https://github.com/Crypto-TII/the-sqisign-1d-pqm4, in the `sqisign` branch.
+
 
 ## License
 
