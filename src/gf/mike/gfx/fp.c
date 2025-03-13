@@ -12,17 +12,6 @@ void fp_set(digit_t* x, const digit_t val)
     }
 }
 
-bool fp_is_equal(const digit_t* a, const digit_t* b)
-{ // Compare two field elements in constant time
-  // Returns 1 (true) if a=b, 0 (false) otherwise
-    digit_t r = 0;
-
-    for (unsigned int i = 0; i < NWORDS_FIELD; i++)
-        r |= a[i] ^ b[i];
-
-    return (bool)is_digit_zero_ct(r);
-}
-
 void MUL(digit_t* out, const digit_t a, const digit_t b)
 { // Digit multiplication, digit*digit -> 2-digit result
   // Inputs: a, b in [0, 2^w-1], where w is the computer wordsize

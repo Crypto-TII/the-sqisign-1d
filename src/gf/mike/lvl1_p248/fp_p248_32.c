@@ -552,10 +552,26 @@ static int modshr(unsigned int n, spint *a) {
   return r;
 }
 
+// return true if equal
+static int modcmp(const spint *a, const spint *b) {
+  spint c[9], d[9];
+  int i, eq = 1;
+  redc(a, c);
+  redc(b, d);
+  for (i = 0; i < 9; i++) {
+    eq &= (((c[i] ^ d[i]) - 1) >> 29) & 1;
+  }
+  return eq;
+}
+
 /* API functions calling generated code */
 
 const digit_t p[NWORDS_ORDER] =  { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,0xffffffff, 0x04ffffff};
 const digit_t pre[NWORDS_ORDER] = { 0x37107b92, 0x49a3176d, 0xde49f200, 0x836ef05f, 0x696b7ba8, 0x830f1b0d, 0x50f86ed3, 0x423df7d };
+
+bool fp_is_equal(const digit_t* a, const digit_t* b) {
+  return (bool) modcmp(a, b);
+}
 
 bool fp_is_zero(const digit_t* a) {
     return (bool) modis0(a);
@@ -567,27 +583,22 @@ void fp_copy(digit_t* out, const digit_t* a) {
 
 void fp_add(digit_t* out, const digit_t* a, const digit_t* b) {
     modadd(a, b, out);
-    modfsb(out);
 }
 
 void fp_sub(digit_t* out, const digit_t* a, const digit_t* b) {
     modsub(a, b, out);
-    modfsb(out);
 }
 
 void fp_neg(digit_t* out, const digit_t* a) {
     modneg(a, out);
-    modfsb(out);
 }
 
 void fp_sqr(digit_t* out, const digit_t* a) {
     modsqr(a, out);
-    modfsb(out);
 }
 
 void fp_mul(digit_t* out, const digit_t* a, const digit_t* b) {
     modmul(a, b, out);
-    modfsb(out);
 }
 
 void _fp_inv(digit_t* a) {
