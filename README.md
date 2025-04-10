@@ -74,7 +74,9 @@ Several modifications are needed to run with pqm4, including flattening the enti
 
 This process is automated by running the script `pqm4/flatten_sources_for_pqm4.sh` script, from the root folder of the repository. It creates several folders starting with `sqisign`, which are to be copied to the `mupq/crypto_sign` folder of the pqm4 repository.
 
-A fork of pqm4 incorporating the required changes is available at https://github.com/Crypto-TII/the-sqisign-1d-pqm4, in the `sqisign` branch.
+A fork of pqm4 incorporating the required changes is available at
+https://github.com/Crypto-TII/the-sqisign-1d-pqm4, in the
+[`ePrint`](https://github.com/Crypto-TII/the-sqisign-1d-pqm4/tree/ePrint) branch.
 
 
 ## License
