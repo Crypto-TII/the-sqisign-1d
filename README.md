@@ -2,9 +2,14 @@
 
 This is a fork of the NIST submission of SQIsign, available at https://github.com/SQISign/the-sqisign - it is advisable to read the README of this repository.
 
-This library implements several arithmetic improvements and the 4 verification variants described in https://eprint.iacr.org/2024/1563 for a new level-1 prime called p248, as well as an optimization of the entire protocol for the original parameter sets.
+This library implements several arithmetic improvements and the 4 verification variants described in [1] for a new level-1 prime called p248, as well as an optimization of the entire protocol for the original parameter sets.
 
 In addition to the reference (fiat-crypto) and optimized (Broadwell assembly) arithmetic options of the original library, we integrate the portable C arithmetic of Mike Scott (https://eprint.iacr.org/2024/779). We also integrate with pqm4 (https://eprint.iacr.org/2024/112), using optimised assembly code for the Cortex M4.
+
+**NOTE:** This version corresponds to the code used to produce the results in [1].
+The branch [`ePrint`](https://github.com/Crypto-TII/the-sqisign-1d/tree/ePrint)
+contains code corresponding to the updated ePrint version
+(https://eprint.iacr.org/2024/1563) of [1].
 
 ## Requirements
 
@@ -87,3 +92,11 @@ Third party code is used in some test and common code files:
 - `src/common/fips202.c`: Public Domain
 - `src/common/randombytes_system.c`: MIT: Copyright (c) 2017 Daan Sprenkels <hello@dsprenkels.com>
 - `apps/PQCgenKAT_sign.c`, `common/randombytes_ctrdrbg.c`, `test/test_kat.c`: by NIST (Public Domain)
+
+## References
+
+[1] Aardal, M. A., Adj, G., Alblooshi, A., Aranha, D. F., Canales-Martínez, I. A.,
+Chávez-Saab, J., Gazzoni Filho, D. L., Reijnders, K., & Rodríguez-Henríquez, F.
+Optimized One-Dimensional SQIsign Verification on Intel and Cortex-M4. IACR
+Transactions on Cryptographic Hardware and Embedded Systems, 2025(1), 497-522.
+https://doi.org/10.46586/tches.v2025.i1.497-522
